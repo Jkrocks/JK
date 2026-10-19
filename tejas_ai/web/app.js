@@ -758,5 +758,10 @@ document.addEventListener("keydown", (e) => {
   }
   loadReminders(); loadNews(); events();
   if (document.fonts) document.fonts.ready.then(layout);
+  // Scanned the QR code in the desktop app: show the iPhone setup steps first.
+  if (location.hash === "#iphone" && !matchMedia("(display-mode: standalone)").matches && !navigator.standalone) {
+    openConnect(); const t = $('#connectTabs .tab[data-ct="iphone"]'); if (t) t.click();
+    history.replaceState(null, "", location.pathname);
+  }
   if ("serviceWorker" in navigator && window.isSecureContext) navigator.serviceWorker.register("sw.js").catch(() => {});
 })();

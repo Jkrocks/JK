@@ -116,8 +116,8 @@ def run_gui(root) -> None:
 
     root.title("Tejas AI")
     root.configure(bg=BG)
-    root.geometry("600x580")
-    root.minsize(560, 540)
+    root.geometry("620x700")
+    root.minsize(580, 640)
     icon = Path(__file__).parent / "web" / "icons" / "icon-192.png"
     try:
         root.iconphoto(True, tk.PhotoImage(file=str(icon)))
@@ -170,8 +170,13 @@ def run_gui(root) -> None:
     setup_btn.pack(side="left", padx=8)
     ollama_btn = button(btns, "1. Get Ollama", lambda: webbrowser.open(setup.ollama_download_url()), primary=True)
 
-    lan = label(root, "", 10, DIM, wraplength=540)
-    lan.pack(fill="x", padx=24, pady=(14, 0))
+    phone = tk.Frame(root, bg=BG)
+    phone.pack(fill="x", padx=24, pady=(14, 0))
+    qr_label = tk.Label(phone, bg=BG, bd=0)
+    qr_label.pack(side="left", padx=(0, 16))
+    lan = label(phone, "", 10, DIM, wraplength=330)
+    lan.pack(side="left", fill="x", expand=True)
+    qr_state = {"url": None, "img": None}
     label(root, "Keep this window open while your family uses Tejas. Closing it stops Tejas.", 9, DIM,
           wraplength=540).pack(fill="x", padx=24, side="bottom", pady=14)
 
@@ -211,7 +216,20 @@ def run_gui(root) -> None:
         if server.urls["lan"]:
             ca = home() / "certs" / "tejas-home-ca.crt"
             code = f"\nPairing code for the phone and TV apps:  {certs.ca_fingerprint(ca)}" if ca.exists() else ""
-            lan.config(text="Phones, tablets and TVs on your Wi-Fi:\n" + "\n".join(server.urls["lan"]) + code)
+            lan.config(text="iPhone: point the Camera at this code, then follow the steps on the screen.\n\n"
+                            "Or type on any phone, tablet or TV on your Wi-Fi:\n" + "\n".join(server.urls["lan"]) + code)
+            url = server.urls["lan"][0]
+            if qr_state["url"] != url:
+                try:
+                    import io
+                    import segno
+                    buf = io.BytesIO()
+                    segno.make(url + "/#iphone", error="m").save(buf, kind="png", scale=5, border=2, dark="#06201a", light="#ffffff")
+                    qr_state["img"] = tk.PhotoImage(data=buf.getvalue())
+                    qr_label.config(image=qr_state["img"])
+                    qr_state["url"] = url
+                except Exception as e:
+                    log(f"QR code failed: {e}")
         if not state["busy"]:
             root.after(4000, refresh)
 
