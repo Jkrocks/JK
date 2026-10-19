@@ -3,7 +3,7 @@ name: Build TEJAS ISO
 on:
   workflow_dispatch:
   push:
-    branches: [main]
+    branches: [main, tejas-os]
     paths-ignore:
       - "**.md"
       - "docs/**"
