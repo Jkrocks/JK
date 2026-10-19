@@ -160,10 +160,25 @@
     <div class="qrs" id="qrs"></div>
     <p class="lead pair-code" id="pairCode" hidden></p>
     <div class="form-actions" id="appSwitch" hidden><button class="btn" id="btnForget">Pair this app with a different computer</button></div>
-    <ol class="steps">
-      <li>The first time, the browser warns the page “isn’t private”. That’s normal: the lock is made by your own computer. Tap <b>Advanced</b>, then <b>Proceed</b>.</li>
-      <li>To remove the warning for good, install the <a href="/tejas-home-ca.crt" download>Tejas home certificate</a> on that device.</li>
-      <li>On a TV: open the browser, type the address with the remote, and use the arrow keys and OK button.</li>
+    <div class="tabs" role="tablist" id="connectTabs">
+      <button class="tab on" data-ct="iphone">iPhone / iPad</button>
+      <button class="tab" data-ct="android">Android</button>
+      <button class="tab" data-ct="tv">TV</button>
+    </div>
+    <ol class="steps" data-ct="iphone">
+      <li>On the iPhone, open <b>Safari</b> and type the address above, or scan the code with the Camera. If Safari says the connection isn’t private, tap <b>Show Details → visit this website</b> (it’s your own computer).</li>
+      <li>Tap <a href="/tejas-home-ca.crt">Tejas home certificate</a> on that page, then <b>Allow</b>. Go to <b>Settings → Profile Downloaded → Install</b>.</li>
+      <li>Then <b>Settings → General → About → Certificate Trust Settings</b> and switch on <b>Tejas Home CA</b>. Now the page is secure and the microphone works.</li>
+      <li>Back in Safari, open the address again and tap <b>Share → Add to Home Screen</b>. Tejas now opens full-screen from its own icon, like an app.</li>
+    </ol>
+    <ol class="steps" data-ct="android" hidden>
+      <li>Install the <b>Tejas AI</b> app (Tejas-AI-Android.apk). It finds this computer by itself.</li>
+      <li>Check the pairing code shown in the app matches the one above, then tap <b>Pair and open</b>.</li>
+      <li>No app? Open the address in Chrome, tap <b>Advanced → Proceed</b>, then menu → <b>Add to Home screen</b>.</li>
+    </ol>
+    <ol class="steps" data-ct="tv" hidden>
+      <li>Android TV: install the Tejas AI app from a USB stick or with “Send files to TV”.</li>
+      <li>Other smart TVs: open the TV’s browser, type the address with the remote, and use the arrow keys and OK.</li>
     </ol>
   </div>
 </div>

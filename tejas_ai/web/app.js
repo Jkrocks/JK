@@ -605,6 +605,10 @@ async function openConnect() {
   } catch {}
 }
 $("#btnConnect").onclick = openConnect;
+$$("#connectTabs .tab").forEach((t) => t.onclick = () => {
+  $$("#connectTabs .tab").forEach((x) => x.classList.toggle("on", x === t));
+  $$("#ovConnect .steps").forEach((o) => o.hidden = o.dataset.ct !== t.dataset.ct);
+});
 if (window.TejasApp) { $("#appSwitch").hidden = false; $("#btnForget").onclick = () => window.TejasApp.forget(); }
 
 /* Parent zone */

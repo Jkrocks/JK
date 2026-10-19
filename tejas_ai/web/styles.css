@@ -224,7 +224,9 @@ body[data-state=speaking] .card.voice{background:radial-gradient(90% 120% at 15%
 .qr code{font-size:14px;color:var(--mint)}
 .pair-code{text-align:center}
 .pair-code b{display:block;font:600 24px ui-monospace,Menlo,Consolas,monospace;letter-spacing:.06em;color:var(--gold);margin-top:6px}
-.steps{color:var(--dim);line-height:1.55;padding-left:20px;margin:0}
+.steps{color:var(--dim);line-height:1.6;padding-left:20px;margin:0;display:flex;flex-direction:column;gap:6px}
+.steps b{color:var(--text)}
+#connectTabs{justify-content:center}
 .steps a{color:var(--gold)}
 
 .toasts{position:fixed;bottom:28px;left:36%;transform:translateX(-50%);z-index:60;display:flex;flex-direction:column;gap:10px;align-items:center;pointer-events:none}
