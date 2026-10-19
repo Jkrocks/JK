@@ -47,7 +47,7 @@ If the PC won't boot the stick, turn off **Secure Boot** in its firmware setting
 | To change | Edit |
 |---|---|
 | Which apps come built in | `packages.list` (one Debian package per line) |
-| Logo, wallpapers, icons, boot splash | Replace `branding/src/tejas-logo-original.png`, then run `python3 branding/make_assets.py` |
+| Logo, wallpapers (Night is the default), icons, boot splash | Replace `branding/src/tejas-logo-original.png`, then run `python3 branding/make_assets.py` |
 | Dock apps and desktop layout | `config/includes.chroot/usr/share/plasma/look-and-feel/org.tejas.desktop/contents/layouts/org.kde.plasma.desktop-layout.js` |
 | Colours and theme defaults | `.../org.tejas.desktop/contents/defaults` and `config/includes.chroot/etc/xdg/kdeglobals` |
 | Name, version, boot entry | `config/hooks/live/0100-tejas-identity.hook.chroot` |
@@ -84,7 +84,7 @@ config/hooks/live/                  scripts run inside the new system while it's
   0400-tejas-apps                   Flathub + Bottles for Bridge
 config/includes.chroot/             files copied straight into the system
   usr/share/plasma/look-and-feel/   TEJAS desktop theme + layout
-  usr/share/wallpapers/             Morning, Noon, Dusk, Mint
+  usr/share/wallpapers/             Night (default), Morning, Noon, Dusk, Mint
   usr/bin/tejas-bridge              Bridge launcher (Windows apps)
   usr/bin/tejas-welcome             first-login welcome page
 branding/                           logo source + asset generator

@@ -24,7 +24,7 @@ printf 'TEJAS 1.0\n' > /etc/issue.net
 if [ -f /etc/default/grub ]; then
 	sed -i 's/^GRUB_DISTRIBUTOR=.*/GRUB_DISTRIBUTOR="TEJAS"/' /etc/default/grub
 	sed -i 's/^GRUB_CMDLINE_LINUX_DEFAULT=.*/GRUB_CMDLINE_LINUX_DEFAULT="quiet splash"/' /etc/default/grub
-	grep -q '^GRUB_BACKGROUND=' /etc/default/grub || echo 'GRUB_BACKGROUND="/usr/share/wallpapers/TEJAS-Morning/contents/images/1920x1080.png"' >> /etc/default/grub
+	grep -q '^GRUB_BACKGROUND=' /etc/default/grub || echo 'GRUB_BACKGROUND="/usr/share/wallpapers/TEJAS-Night/contents/images/1920x1080.png"' >> /etc/default/grub
 fi
 
 # Plasma's About page reads these.

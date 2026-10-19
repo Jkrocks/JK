@@ -1,7 +1,7 @@
 """Builds every TEJAS branding asset from branding/src/tejas-logo-original.png.
 Run: python3 branding/make_assets.py  (needs pillow + numpy)"""
 import os, numpy as np
-from PIL import Image
+from PIL import Image, ImageFilter
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 OUT = os.path.join(ROOT, 'branding', 'out'); os.makedirs(OUT, exist_ok=True)
 INC = os.path.join(ROOT, 'config', 'includes.chroot')
@@ -11,7 +11,14 @@ def cutout(img):
     a = np.asarray(img).astype(np.float32) / 255.0
     bg = a[2:6, 2:6].reshape(-1, 3).mean(0)
     diff = np.max(np.abs(a - bg), axis=2)
-    alpha = np.clip((diff - 0.015) / 0.09, 0, 1)
+    alpha = np.clip((diff - 0.06) / 0.08, 0, 1)
+    # Remove the pale paper fringe on soft edges so the logo works on dark backgrounds too.
+    edge = (alpha > 0.35) & (alpha < 0.999)
+    safe = np.where(edge, alpha, 1)[..., None]
+    unmixed = np.clip((a - (1 - safe) * bg) / safe, 0, 1)
+    a = np.where(edge[..., None], unmixed, a)
+    am = Image.fromarray((alpha * 255).astype('uint8')).filter(ImageFilter.GaussianBlur(0.6))
+    alpha = np.asarray(am).astype(np.float32) / 255.0
     return Image.fromarray((np.dstack([a, alpha]) * 255).round().astype('uint8'), 'RGBA')
 
 def square(im, margin=0.08):
@@ -66,9 +73,16 @@ SKIES = {
  'Dusk':    ('#d9d6fb', '#f4ecff', [(.2, .15, .55, .4, '#ffffff'), (.85, .25, .5, .45, '#b9a8f2'), (.3, 1, .6, .5, '#f6c6d8')]),
  'Mint':    ('#cdf1ea', '#eefaff', [(.15, .1, .6, .4, '#ffffff'), (.85, .3, .5, .45, '#7fdcc4'), (.4, 1, .6, .5, '#a9d0f5')]),
 }
+def night():
+    t = (yy / Hd)[..., None]
+    img = np.array([30, 30, 33], np.float32) * (1 - t) + np.array([12, 12, 13], np.float32) * t
+    dd = np.sqrt(((xx - Wd * .745) / (Wd * .32)) ** 2 + ((yy - Hd * .47) / (Hd * .42)) ** 2)
+    a = (np.clip(1 - dd, 0, 1) ** 2.2)[..., None] * .22
+    img = img * (1 - a) + np.array([255, 110, 20], np.float32) * a
+    return np.where(((xx % 48 < 3) & (yy % 48 < 3))[..., None], img + 9, img)
 bigmark = mark.resize((int(mark.width * 1.45), int(mark.height * 1.45)), Image.LANCZOS)
-for name, (top, bot, bl) in SKIES.items():
-    img = sphere(sky(top, bot, bl), Wd * .13, Hd * .78, 190)
+for name, (top, bot, bl) in list(SKIES.items()) + [('Night', (None, None, None))]:
+    img = night() if name == 'Night' else sphere(sky(top, bot, bl), Wd * .13, Hd * .78, 190)
     out = Image.fromarray(np.clip(img, 0, 255).astype('uint8'), 'RGB').convert('RGBA')
     out.alpha_composite(bigmark, (int(Wd * .61), int(Hd * .27))); out = out.convert('RGB')
     base = f'{INC}/usr/share/wallpapers/TEJAS-{name}'; os.makedirs(f'{base}/contents/images', exist_ok=True)
