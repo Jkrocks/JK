@@ -1,0 +1,9 @@
+[KDE]
+LookAndFeelPackage=org.tejas.desktop
+
+[General]
+ColorScheme=BreezeLight
+AccentColor=31,143,255
+
+[Icons]
+Theme=breeze

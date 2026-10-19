@@ -1,0 +1,5 @@
+#!/bin/sh
+# Keep the ISO lean.
+set -e
+apt-get clean
+rm -rf /tmp/* /var/tmp/*

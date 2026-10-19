@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Name=Welcome to TEJAS
+GenericName=Tips for getting started
+Exec=tejas-welcome --force
+Icon=tejas-logo
+Terminal=false
+Categories=System;

@@ -1,0 +1,26 @@
+#!/bin/sh
+# TEJAS live-build configuration (Debian 13 "trixie", 64-bit PCs).
+# `lb config` runs this automatically. Edit flags here, not by hand in config/.
+set -e
+
+lb config noauto \
+	--distribution trixie \
+	--architectures amd64 \
+	--archive-areas "main contrib non-free-firmware" \
+	--mirror-bootstrap "http://deb.debian.org/debian/" \
+	--mirror-chroot "http://deb.debian.org/debian/" \
+	--mirror-binary "http://deb.debian.org/debian/" \
+	--security true \
+	--updates true \
+	--apt-recommends true \
+	--firmware-chroot true \
+	--firmware-binary true \
+	--binary-images iso-hybrid \
+	--bootloaders "grub-efi,syslinux" \
+	--debian-installer none \
+	--iso-application "TEJAS" \
+	--iso-publisher "JK Design" \
+	--iso-volume "TEJAS 1.0" \
+	--bootappend-live "boot=live components quiet splash locales=en_IN.UTF-8 keyboard-layouts=us username=tejas hostname=tejas" \
+	--cache-packages true \
+	"${@}"

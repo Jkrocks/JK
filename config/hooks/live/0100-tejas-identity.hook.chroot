@@ -1,0 +1,37 @@
+#!/bin/sh
+# Gives the system its TEJAS name everywhere it shows: About, boot menu, login.
+set -e
+
+cat > /usr/lib/os-release <<'EOF'
+PRETTY_NAME="TEJAS 1.0"
+NAME="TEJAS"
+VERSION_ID="1.0"
+VERSION="1.0 (Sky)"
+VERSION_CODENAME=trixie
+ID=tejas
+ID_LIKE=debian
+LOGO=tejas-logo
+HOME_URL="https://github.com/Jkrocks/tejas-os"
+SUPPORT_URL="https://github.com/Jkrocks/tejas-os/issues"
+BUG_REPORT_URL="https://github.com/Jkrocks/tejas-os/issues"
+EOF
+ln -sf ../usr/lib/os-release /etc/os-release
+
+printf 'TEJAS 1.0 \\n \\l\n\n' > /etc/issue
+printf 'TEJAS 1.0\n' > /etc/issue.net
+
+# Installed systems: name the boot entry TEJAS and show the splash screen.
+if [ -f /etc/default/grub ]; then
+	sed -i 's/^GRUB_DISTRIBUTOR=.*/GRUB_DISTRIBUTOR="TEJAS"/' /etc/default/grub
+	sed -i 's/^GRUB_CMDLINE_LINUX_DEFAULT=.*/GRUB_CMDLINE_LINUX_DEFAULT="quiet splash"/' /etc/default/grub
+	grep -q '^GRUB_BACKGROUND=' /etc/default/grub || echo 'GRUB_BACKGROUND="/usr/share/wallpapers/TEJAS-Morning/contents/images/1920x1080.png"' >> /etc/default/grub
+fi
+
+# Plasma's About page reads these.
+mkdir -p /etc/xdg
+cat > /etc/xdg/kcm-about-distrorc <<'EOF'
+[General]
+LogoPath=/usr/share/tejas/branding/logo-256.png
+Website=https://github.com/Jkrocks/tejas-os
+Variant=Sky
+EOF

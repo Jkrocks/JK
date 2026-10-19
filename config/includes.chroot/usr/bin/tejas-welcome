@@ -1,0 +1,22 @@
+#!/bin/sh
+# Runs once per user at login: shows the TEJAS welcome page.
+# In the live (try-it) session it also puts "Install TEJAS" on the desktop.
+CONF="${XDG_CONFIG_HOME:-$HOME/.config}"
+DONE="$CONF/tejas-welcome-done"
+
+if grep -qw 'boot=live' /proc/cmdline 2>/dev/null; then
+	DESK="$(xdg-user-dir DESKTOP 2>/dev/null || echo "$HOME/Desktop")"
+	mkdir -p "$DESK"
+	for f in /usr/share/applications/install-debian.desktop /usr/share/applications/calamares.desktop; do
+		if [ -f "$f" ]; then
+			cp "$f" "$DESK/install-tejas.desktop"
+			chmod +x "$DESK/install-tejas.desktop"
+			break
+		fi
+	done
+fi
+
+[ "$1" = "--force" ] || [ ! -f "$DONE" ] || exit 0
+mkdir -p "$CONF" && touch "$DONE"
+sleep 3
+exec xdg-open /usr/share/tejas/welcome/index.html

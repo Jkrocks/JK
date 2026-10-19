@@ -1,0 +1,88 @@
+# TEJAS package list. One Debian 13 package per line; '#' starts a comment.
+# build.sh checks every name and skips (with a warning) any that don't exist,
+# so a typo or a renamed package never breaks the whole build.
+
+## Desktop: KDE Plasma 6
+kde-plasma-desktop
+plasma-nm
+plasma-pa
+bluedevil
+powerdevil
+kscreen
+systemsettings
+kinfocenter
+kde-spectacle
+sddm
+sddm-theme-breeze
+xdg-desktop-portal-kde
+pipewire-audio
+wireplumber
+network-manager
+plymouth
+plymouth-themes
+
+## TEJAS core apps (all free)
+firefox-esr
+thunderbird
+dolphin
+konsole
+kate
+ark
+gwenview
+okular
+elisa
+vlc
+libreoffice
+libreoffice-kf6
+libreoffice-plasma
+
+## Create
+inkscape
+krita
+gimp
+blender
+kdenlive
+obs-studio
+
+## Play
+supertuxkart
+
+## App store + Windows apps (Bridge)
+flatpak
+plasma-discover
+plasma-discover-backend-flatpak
+wine
+wine64
+
+## Installer
+calamares
+calamares-settings-debian
+
+## Hardware: firmware and drivers for real PCs
+firmware-linux
+firmware-linux-nonfree
+firmware-misc-nonfree
+firmware-iwlwifi
+firmware-realtek
+firmware-atheros
+firmware-amd-graphics
+firmware-sof-signed
+intel-microcode
+amd64-microcode
+mesa-vulkan-drivers
+
+## Fonts and languages (incl. Indian scripts)
+fonts-noto-core
+fonts-noto-color-emoji
+fonts-noto-ui-core
+fonts-indic
+locales
+
+## Handy tools
+kdialog
+partitionmanager
+kde-config-flatpak
+curl
+wget
+unzip
+git

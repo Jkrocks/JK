@@ -1,0 +1,11 @@
+[Desktop Entry]
+Type=Application
+Name=Bridge
+GenericName=Run Windows apps
+Comment=Run Windows apps and installers on TEJAS
+Exec=tejas-bridge %f
+Icon=tejas-bridge
+Terminal=false
+Categories=System;Emulator;
+MimeType=application/x-ms-dos-executable;application/x-msdownload;application/x-msi;application/x-ms-shortcut;
+Keywords=windows;exe;msi;wine;bottles;

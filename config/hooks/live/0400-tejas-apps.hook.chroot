@@ -1,0 +1,13 @@
+#!/bin/sh
+# App store and Bridge: add Flathub, preinstall Bottles (the engine behind Bridge).
+set -e
+
+flatpak remote-add --if-not-exists --system flathub https://dl.flathub.org/repo/flathub.flatpakrepo
+
+# Preinstalling Bottles makes the ISO bigger but means Bridge works offline on day one.
+# If it fails (no network in the build), Bridge offers a one-click install instead.
+flatpak install --system --noninteractive -y flathub com.usebottles.bottles \
+	|| echo "Bottles preinstall skipped; Bridge will offer to install it."
+
+update-desktop-database -q /usr/share/applications || true
+gtk-update-icon-cache -q -f /usr/share/icons/hicolor || true

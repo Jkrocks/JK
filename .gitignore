@@ -1,0 +1,19 @@
+# live-build output and caches
+.build/
+cache/
+chroot/
+binary/
+out/
+*.iso
+*.log
+build.log
+chroot.files
+chroot.packages.*
+binary.modified_timestamps
+config/binary
+config/bootstrap
+config/chroot
+config/common
+config/source
+config/package-lists/tejas.list.chroot
+branding/out/

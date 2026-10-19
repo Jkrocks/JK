@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Welcome to TEJAS</title>
+<style>
+:root{--ink:#0d1117;--ink2:#4b5563;--blue:#1f8fff}
+*{box-sizing:border-box}
+body{margin:0;min-height:100vh;font-family:"Noto Sans","Plus Jakarta Sans",system-ui,sans-serif;color:var(--ink);
+background:radial-gradient(60% 40% at 15% 10%,#fff 0%,transparent 70%),radial-gradient(50% 45% at 90% 30%,#7fb4ec 0%,transparent 70%),radial-gradient(60% 50% at 40% 100%,#a9d0f5 0%,transparent 70%),linear-gradient(180deg,#cfe6fb,#eaf5ff);background-attachment:fixed}
+main{max-width:1080px;margin:0 auto;padding:56px 24px 64px}
+.hero{display:flex;align-items:center;gap:40px;flex-wrap:wrap}
+.hero img{width:300px;max-width:70vw;height:auto}
+h1{font-size:clamp(44px,7vw,88px);font-weight:800;letter-spacing:-.04em;line-height:.95;margin:0}
+h1 span{color:#ff7a00}
+.lead{font-size:18px;line-height:1.55;color:var(--ink2);max-width:520px;margin:16px 0 0}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:16px;margin-top:48px}
+.card{background:rgba(255,255,255,.55);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border:1px solid rgba(255,255,255,.8);border-radius:28px;padding:22px;box-shadow:0 12px 32px rgba(40,100,170,.14)}
+.key{width:56px;height:56px;border-radius:16px;display:grid;place-items:center;background:linear-gradient(160deg,#fff,#d3dce7);box-shadow:0 5px 0 #b3bfcd,0 12px 20px rgba(40,90,150,.22);position:relative;color:#1764d4;font-weight:800;font-size:22px}
+.key.orange{background:linear-gradient(160deg,#ffb867,#ff7a00);box-shadow:0 5px 0 #d66300,0 12px 22px rgba(255,122,0,.35);color:#fff}
+.key.lime{background:linear-gradient(160deg,#e3ff8f,#8fd42a);box-shadow:0 5px 0 #6aa81a,0 12px 22px rgba(120,190,30,.3);color:#1f3a05}
+.card h2{font-size:19px;margin:20px 0 6px;font-weight:800}
+.card p{margin:0;font-size:14px;line-height:1.55;color:var(--ink2)}
+kbd{font-family:inherit;font-weight:700;background:#fff;border-radius:8px;padding:1px 7px;box-shadow:0 2px 0 #c9d3df}
+.cta{display:inline-flex;align-items:center;gap:12px;height:56px;padding:6px 26px 6px 6px;border-radius:999px;background:var(--ink);color:#fff;text-decoration:none;font-weight:700;margin-top:28px}
+.cta i{width:44px;height:44px;border-radius:50%;background:#fff;color:var(--ink);display:grid;place-items:center;font-style:normal;font-size:20px}
+.cta:hover{background:#1c2430}
+footer{margin-top:48px;font-size:13px;color:var(--ink2)}
+a{color:#0b5fd6}
+</style>
+</head>
+<body>
+<main>
+<section class="hero">
+<img src="../branding/logo-full.png" alt="TEJAS OS logo">
+<div>
+<h1>Welcome to<br>TEJAS<span>.</span></h1>
+<p class="lead">Your new desktop is ready. Every app here is free and open source, with no trials, no ads and no account needed.</p>
+<a class="cta" href="https://flathub.org/"><i>→</i>Browse free apps</a>
+</div>
+</section>
+
+<section class="grid" aria-label="Getting started">
+<article class="card"><div class="key orange">1</div><h2>Install TEJAS</h2><p>Trying TEJAS from a USB stick? Double-click <b>Install TEJAS</b> on the desktop to put it on this PC. It takes about 15 minutes.</p></article>
+<article class="card"><div class="key">2</div><h2>Find your apps</h2><p>Click the <b>TEJAS logo</b> at the top left, or the grid button in the dock, to see every app. Press <kbd>Meta</kbd> to search.</p></article>
+<article class="card"><div class="key">3</div><h2>Get more, free</h2><p>Open <b>Discover</b> from the dock. Thousands of free apps install in one click and update by themselves.</p></article>
+<article class="card"><div class="key lime">4</div><h2>Run Windows apps</h2><p>Double-click any <b>.exe</b> or open <b>Bridge</b> from the dock. Most apps work; games with anti-cheat usually don't.</p></article>
+<article class="card"><div class="key">5</div><h2>Make it yours</h2><p>Right-click the desktop and choose <b>Desktop and Wallpaper</b> to pick Morning, Noon, Dusk or Mint.</p></article>
+<article class="card"><div class="key">6</div><h2>Stay safe</h2><p>Security updates arrive through <b>Discover</b> until June 2030. Install them when the dock shows a badge.</p></article>
+</section>
+
+<footer>TEJAS 1.0 is built on Debian 13 and KDE Plasma 6. Open this page again any time from the app menu: <b>Welcome to TEJAS</b>. <a href="https://github.com/Jkrocks/tejas-os">Project page</a></footer>
+</main>
+</body>
+</html>

@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Name=Welcome to TEJAS
+Exec=tejas-welcome
+Icon=tejas-logo
+Terminal=false
+NoDisplay=true
+X-KDE-autostart-phase=2

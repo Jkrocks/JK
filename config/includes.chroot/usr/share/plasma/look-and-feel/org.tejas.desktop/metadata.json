@@ -1,0 +1,18 @@
+{
+    "KPackageStructure": "Plasma/LookAndFeel",
+    "KPlugin": {
+        "Authors": [
+            {
+                "Name": "JK Design"
+            }
+        ],
+        "Category": "",
+        "Description": "TEJAS sky-glass desktop: floating dock, top bar and sky wallpapers",
+        "Id": "org.tejas.desktop",
+        "License": "GPL-2.0-or-later",
+        "Name": "TEJAS",
+        "Version": "1.0",
+        "Website": "https://github.com/Jkrocks/tejas-os"
+    },
+    "X-Plasma-APIVersion": "2"
+}

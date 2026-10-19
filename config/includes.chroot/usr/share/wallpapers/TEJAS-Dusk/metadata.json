@@ -1,0 +1,8 @@
+{
+  "KPlugin": {
+    "Id": "TEJAS-Dusk",
+    "Name": "TEJAS Dusk",
+    "Authors": [{"Name": "JK Design"}],
+    "License": "CC-BY-SA-4.0"
+  }
+}

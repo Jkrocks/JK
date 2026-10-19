@@ -1,0 +1,8 @@
+{
+  "KPlugin": {
+    "Id": "TEJAS-Mint",
+    "Name": "TEJAS Mint",
+    "Authors": [{"Name": "JK Design"}],
+    "License": "CC-BY-SA-4.0"
+  }
+}

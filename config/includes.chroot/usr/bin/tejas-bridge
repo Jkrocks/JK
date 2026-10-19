@@ -1,0 +1,21 @@
+#!/bin/sh
+# Bridge: run Windows apps on TEJAS.
+# Bridge is a friendly front door to Bottles, which runs Windows apps with Wine.
+#   tejas-bridge              open Bridge
+#   tejas-bridge setup.exe    run or install a Windows app
+APP=com.usebottles.bottles
+
+if flatpak info "$APP" >/dev/null 2>&1; then
+	if [ -n "$1" ]; then
+		exec flatpak run "$APP" "$1"
+	fi
+	exec flatpak run "$APP"
+fi
+
+msg="Bridge needs one free download to run Windows apps (about 300 MB).
+
+Install it now?"
+if command -v kdialog >/dev/null 2>&1; then
+	kdialog --title "Bridge" --icon tejas-bridge --yes-label "Install" --no-label "Not now" --yesno "$msg" || exit 0
+fi
+exec plasma-discover --application "appstream://$APP"

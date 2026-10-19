@@ -1,0 +1,24 @@
+#!/bin/sh
+# Boot splash: the TEJAS logo on a deep night-sky blue, with a soft spinner.
+set -e
+
+SRC=/usr/share/plymouth/themes/spinner
+DST=/usr/share/plymouth/themes/tejas
+[ -d "$SRC" ] || { echo "plymouth spinner theme missing, keeping default splash"; exit 0; }
+
+rm -rf "$DST"
+cp -a "$SRC" "$DST"
+mv "$DST/spinner.plymouth" "$DST/tejas.plymouth"
+sed -i \
+	-e 's/^Name=.*/Name=TEJAS/' \
+	-e 's/^Description=.*/Description=TEJAS boot splash/' \
+	-e 's#/spinner#/tejas#g' \
+	-e 's/^BackgroundStartColor=.*/BackgroundStartColor=0x0b2a55/' \
+	-e 's/^BackgroundEndColor=.*/BackgroundEndColor=0x0b2a55/' \
+	"$DST/tejas.plymouth"
+grep -q '^BackgroundStartColor=' "$DST/tejas.plymouth" || \
+	sed -i '/^\[two-step\]/a BackgroundStartColor=0x0b2a55\nBackgroundEndColor=0x0b2a55' "$DST/tejas.plymouth"
+cp /usr/share/tejas/branding/plymouth-logo.png "$DST/watermark.png"
+
+plymouth-set-default-theme tejas
+update-initramfs -u -k all || true

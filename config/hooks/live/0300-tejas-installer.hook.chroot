@@ -1,0 +1,52 @@
+#!/bin/sh
+# Installer: rebrand Calamares (Debian's settings) as "Install TEJAS".
+set -e
+
+B=/etc/calamares/branding
+[ -d "$B/debian" ] || { echo "calamares debian branding missing, skipping"; exit 0; }
+
+rm -rf "$B/tejas"
+cp -a "$B/debian" "$B/tejas"
+D="$B/tejas/branding.desc"
+
+sed -i -E \
+	-e 's/^(componentName:).*/\1  tejas/' \
+	-e 's/^([[:space:]]*productName:).*/\1         "TEJAS"/' \
+	-e 's/^([[:space:]]*shortProductName:).*/\1    "TEJAS"/' \
+	-e 's/^([[:space:]]*version:).*/\1             "1.0"/' \
+	-e 's/^([[:space:]]*shortVersion:).*/\1        "1.0"/' \
+	-e 's/^([[:space:]]*versionedName:).*/\1       "TEJAS 1.0"/' \
+	-e 's/^([[:space:]]*shortVersionedName:).*/\1  "TEJAS 1.0"/' \
+	-e 's/^([[:space:]]*bootloaderEntryName:).*/\1 "TEJAS"/' \
+	-e 's#^([[:space:]]*productUrl:).*#\1          "https://github.com/Jkrocks/tejas-os"#' \
+	-e 's#^([[:space:]]*supportUrl:).*#\1          "https://github.com/Jkrocks/tejas-os/issues"#' \
+	-e 's#^([[:space:]]*knownIssuesUrl:).*#\1      "https://github.com/Jkrocks/tejas-os/issues"#' \
+	-e 's#^([[:space:]]*releaseNotesUrl:).*#\1     "https://github.com/Jkrocks/tejas-os/releases"#' \
+	-e 's/^([[:space:]]*[Ss]idebar[Bb]ackground:).*/\1 "#eaf5ff"/' \
+	-e 's/^([[:space:]]*[Ss]idebar[Tt]ext:).*/\1 "#0d1117"/' \
+	-e 's/^([[:space:]]*[Ss]idebar[Tt]ext[Ss]elect:).*/\1 "#ffffff"/' \
+	-e 's/^([[:space:]]*[Ss]idebar[Tt]ext[Cc]urrent:).*/\1 "#ffffff"/' \
+	-e 's/^([[:space:]]*[Ss]idebar[Bb]ackground[Cc]urrent:).*/\1 "#1f8fff"/' \
+	"$D"
+
+# Point every logo/welcome image the branding file names at the TEJAS artwork.
+for key in productLogo productIcon; do
+	f="$(grep -E "^[[:space:]]*$key:" "$D" | head -n1 | sed -E 's/.*:[[:space:]]*"?([^"]+)"?.*/\1/')"
+	[ -n "$f" ] && cp /usr/share/tejas/branding/logo-256.png "$B/tejas/$f"
+done
+f="$(grep -E '^[[:space:]]*productWelcome:' "$D" | head -n1 | sed -E 's/.*:[[:space:]]*"?([^"]+)"?.*/\1/')"
+[ -n "$f" ] && cp /usr/share/tejas/branding/logo-full.png "$B/tejas/$f"
+
+if [ -f /etc/calamares/settings.conf ]; then
+	sed -i -E 's/^branding:.*/branding: tejas/' /etc/calamares/settings.conf
+fi
+
+# Rename the launcher.
+for f in /usr/share/applications/install-debian.desktop /usr/share/applications/calamares.desktop; do
+	[ -f "$f" ] || continue
+	sed -i -E \
+		-e 's/^Name(\[[^]]*\])?=.*/Name=Install TEJAS/' \
+		-e 's/^GenericName(\[[^]]*\])?=.*/GenericName=Install TEJAS on this PC/' \
+		-e 's/^Icon=.*/Icon=tejas-logo/' \
+		"$f"
+done
