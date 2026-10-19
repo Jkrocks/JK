@@ -2,8 +2,8 @@
 LookAndFeelPackage=org.tejas.desktop
 
 [General]
-ColorScheme=BreezeLight
-AccentColor=31,143,255
+ColorScheme=BreezeDark
+AccentColor=255,138,0
 
 [Icons]
 Theme=breeze

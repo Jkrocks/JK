@@ -2,14 +2,14 @@
 widgetStyle=Breeze
 
 [kdeglobals][General]
-ColorScheme=BreezeLight
-AccentColor=31,143,255
+ColorScheme=BreezeDark
+AccentColor=255,138,0
 
 [kdeglobals][Icons]
 Theme=breeze
 
 [plasmarc][Theme]
-name=default
+name=breeze-dark
 
 [kcminputrc][Mouse]
 cursorTheme=breeze_cursors
