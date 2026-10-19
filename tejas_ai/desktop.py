@@ -22,6 +22,16 @@ from pathlib import Path
 from . import __version__, certs, setup
 from .config import Config, home
 
+def log(msg: str) -> None:
+    """Startup diary in ~/.tejas-ai/desktop.log, to help fix problems on a family's computer."""
+    import datetime
+    try:
+        with open(home() / "desktop.log", "a", encoding="utf-8") as f:
+            f.write(f"{datetime.datetime.now():%Y-%m-%d %H:%M:%S} {msg}\n")
+    except OSError:
+        pass
+
+
 BG, PANEL, EDGE, TEXT, DIM, MINT, GOLD, BAD = "#050b0b", "#0f1d1b", "#1d3330", "#e9f2f0", "#8ea6a1", "#74f0c9", "#e8c88a", "#ff7b72"
 
 
@@ -72,18 +82,23 @@ class ServerThread(threading.Thread):
     def run(self):
         from .__main__ import make_servers, serve
         try:
+            log(f"server thread starting (python {sys.version.split()[0]}, frozen={getattr(sys, 'frozen', False)})")
             cfg = Config()
             if port_busy(cfg.get("server.http_port", 8000)):
+                log("port already in use: using the Tejas that is already running")
                 self.urls["lan"] = [f"https://{ip}:{cfg.get('server.https_port', 8443)}" for ip in certs.lan_ips()]
                 self.ready.set()  # already running (started elsewhere): just use it
                 return
             self.servers, self.urls = make_servers()
+            log(f"servers created: {self.urls}")
             loop = asyncio.new_event_loop()
             asyncio.set_event_loop(loop)
             task = loop.create_task(serve(self.servers))
             loop.call_later(1.5, self.ready.set)
             loop.run_until_complete(task)
         except Exception as e:  # show it in the window instead of crashing
+            import traceback
+            log("server error:\n" + traceback.format_exc())
             self.error = f"{type(e).__name__}: {e}"
             self.ready.set()
 
@@ -246,6 +261,7 @@ def run_gui(root) -> None:
 
 def main() -> None:
     multiprocessing.freeze_support()
+    log(f"Tejas AI desktop {__version__} starting on {sys.platform}")
     try:
         import tkinter as tk
         root = tk.Tk()

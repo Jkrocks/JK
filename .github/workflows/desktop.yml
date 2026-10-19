@@ -52,27 +52,32 @@ jobs:
           esac
           python - "$BIN" <<'EOF'
           import json, os, subprocess, sys, time, urllib.request
-          env = dict(os.environ, TEJAS_AI_HOME=os.path.abspath("smoke-home"))
-          # No screen on CI runners: the app falls back to a plain server when it can't open its window.
+          home = os.path.abspath("smoke-home")
+          env = dict(os.environ, TEJAS_AI_HOME=home)
           p = subprocess.Popen([sys.argv[1]], env=env, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-          ok = False; last = None
-          for _ in range(90):
+          stage, last, ok = "status", None, False
+          t0 = time.time()
+          while time.time() - t0 < 120:
               time.sleep(1)
               try:
-                  s = json.load(urllib.request.urlopen("http://127.0.0.1:8000/api/status", timeout=2))
+                  if stage == "status":
+                      s = json.load(urllib.request.urlopen("http://127.0.0.1:8000/api/status", timeout=5))
+                      print(f"status ok after {time.time() - t0:.0f}s: {s['version']}"); stage = "chat"
                   r = urllib.request.urlopen(urllib.request.Request("http://127.0.0.1:8000/api/chat",
                       data=b'{"text":"what is 245 times 37"}', headers={"Content-Type": "application/json"}), timeout=60).read().decode()
-                  print(s["version"], r.splitlines()[0]); ok = "9065" in r; break
+                  print(r.splitlines()[0]); ok = "9065" in r; break
               except Exception as e:
-                  last = e
+                  last = f"{type(e).__name__}: {e}"
           p.kill()
           if not ok:
-              out = p.stdout.read().decode(errors="ignore")[-2500:]
-              logf = os.path.join("smoke-home", "desktop.log")
+              out = (p.stdout.read() or b"").decode(errors="ignore")[-2000:]
+              logf = os.path.join(home, "desktop.log")
               if os.path.exists(logf):
-                  out += "\n--- desktop.log ---\n" + open(logf, encoding="utf-8", errors="ignore").read()[-2500:]
+                  out += "\n--- desktop.log ---\n" + open(logf, encoding="utf-8", errors="ignore").read()[-3000:]
+              if os.name == "nt":
+                  out += "\n--- port 8000 ---\n" + subprocess.run("netstat -ano | findstr :8000", shell=True, capture_output=True, text=True).stdout[-1500:]
               print(out)
-              msg = (f"smoke test failed: {last}\n{out}").replace("%", "%25").replace("\r", "").replace("\n", "%0A")
+              msg = f"failed at {stage}: {last}\n{out}".replace("%", "%25").replace("\r", "").replace("\n", "%0A")
               print(f"::error title=Smoke test::{msg}")
               sys.exit(1)
           EOF
