@@ -1,0 +1,244 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#050b0b">
+<meta name="color-scheme" content="dark">
+<title>Tejas AI</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/mark.png">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="bg" aria-hidden="true"></div>
+
+<div class="app" id="app">
+  <!-- Top bar -->
+  <header class="top">
+    <div class="brand">
+      <span class="brand-mark"><img src="icons/mark.png" alt=""></span>
+      <span class="brand-text"><b>Tejas AI</b><small>Home assistant · V1 2026</small></span>
+    </div>
+    <div class="toolbar" role="toolbar" aria-label="Quick tools">
+      <div class="tgroup">
+        <button class="tbtn on" id="viewGraph" title="Mind map" aria-label="Mind map"><svg viewBox="0 0 24 24"><circle cx="6" cy="12" r="2.5"/><circle cx="18" cy="6" r="2"/><circle cx="18" cy="18" r="2"/><path d="M8.3 11 16 6.8M8.3 13 16 17.2"/></svg></button>
+        <button class="tbtn" id="btnConnect" title="Use on a phone or TV" aria-label="Use on a phone or TV"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="13" height="10" rx="1.5"/><rect x="17.5" y="8" width="4" height="11" rx="1"/><path d="M7 18h6"/></svg></button>
+      </div>
+      <div class="tgroup">
+        <button class="tbtn" id="btnAddReminder" title="New reminder" aria-label="New reminder"><svg viewBox="0 0 24 24"><path d="M6 16V11a6 6 0 0 1 12 0v5l1.5 2h-15Z"/><path d="M10 20.5a2 2 0 0 0 4 0"/></svg></button>
+        <button class="tbtn" id="btnAddTimer" title="New timer" aria-label="New timer"><svg viewBox="0 0 24 24"><circle cx="12" cy="13" r="7.5"/><path d="M12 9v4l2.5 2M10 2.5h4"/></svg></button>
+      </div>
+      <div class="tgroup">
+        <button class="tbtn" id="btnParent" title="Parent zone" aria-label="Parent zone"><svg viewBox="0 0 24 24"><rect x="5" y="10.5" width="14" height="10" rx="2"/><path d="M8 10.5V8a4 4 0 0 1 8 0v2.5"/></svg></button>
+      </div>
+    </div>
+    <div class="top-right">
+      <button class="pill-btn" id="btnNew"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>New chat</button>
+      <span class="status-dot" id="brainPill" title=""><i></i><span>Checking…</span></span>
+      <button class="who" id="btnWho" aria-label="Switch person"><span class="avatar" id="whoAvatar">?</span></button>
+    </div>
+  </header>
+
+  <!-- Mind map -->
+  <main class="stage" id="stage">
+    <div class="today"><div class="clock-time" id="clockTime">--:--</div><div class="clock-date" id="clockDate"></div></div>
+    <svg class="wires" id="wires" aria-hidden="true"></svg>
+
+    <div class="orb-zone">
+      <div class="orb-disc">
+        <div class="orb-title"><b id="orbName">Tejas</b><span id="orbSub">Your home companion</span></div>
+        <button class="orb" id="mic" aria-label="Talk to Tejas"><canvas id="core"></canvas></button>
+        <div class="orb-state" id="stateLabel" role="status" aria-live="polite">Tap the orb to talk</div>
+        <button class="stop" id="stop" hidden aria-label="Stop">Stop</button>
+      </div>
+    </div>
+
+    <nav class="nodes" id="nodes" aria-label="What Tejas can show">
+      <button class="node on" data-node="ask"><span class="ni"><svg viewBox="0 0 24 24"><path d="M12 3l1.8 4.6L18.5 9l-4.7 1.4L12 15l-1.8-4.6L5.5 9l4.7-1.4Z"/><path d="M18 15l.8 2 2 .8-2 .8-.8 2-.8-2-2-.8 2-.8Z"/></svg></span><b id="nAsk">6</b><small>Ask me to</small></button>
+      <button class="node" data-node="reminders"><span class="ni"><svg viewBox="0 0 24 24"><path d="M6 16V11a6 6 0 0 1 12 0v5l1.5 2h-15Z"/><path d="M10 20.5a2 2 0 0 0 4 0"/></svg></span><b id="nRem">0</b><small>Reminders</small></button>
+      <button class="node" data-node="timers"><span class="ni"><svg viewBox="0 0 24 24"><circle cx="12" cy="13" r="7.5"/><path d="M12 9v4l2.5 2M10 2.5h4"/></svg></span><b id="nTim">0</b><small>Timers</small></button>
+      <button class="node" data-node="news"><span class="ni"><svg viewBox="0 0 24 24"><rect x="3.5" y="5" width="17" height="14" rx="2"/><path d="M7 9h10M7 12.5h10M7 16h6"/></svg></span><b id="nNews">0</b><small>Headlines</small></button>
+      <button class="node" data-node="mind"><span class="ni"><svg viewBox="0 0 24 24"><path d="M9 4.5a3.5 3.5 0 0 0-3.4 4.3A3.5 3.5 0 0 0 6 15.5a3.5 3.5 0 0 0 6 2.5V5.7A3.4 3.4 0 0 0 9 4.5ZM15 4.5a3.5 3.5 0 0 1 3.4 4.3 3.5 3.5 0 0 1-.4 6.7 3.5 3.5 0 0 1-6 2.5"/></svg></span><b id="nMind">0</b><small>Memories</small></button>
+    </nav>
+
+    <ul class="fan" id="fan" aria-live="polite"></ul>
+    <div class="fan-head" id="fanHead"></div>
+  </main>
+
+  <!-- Right panel -->
+  <aside class="side" id="side" aria-label="Tejas panel">
+    <div class="side-scroll">
+      <div class="side-kicker"><span class="k-ico"><img src="icons/mark.png" alt=""></span><span id="kicker">Home</span></div>
+      <h1 class="side-title" id="greet">Hello there</h1>
+      <p class="side-sub" id="greetSub">What shall we do today?</p>
+
+      <section class="answer" id="caption" aria-live="polite">
+        <h2><svg viewBox="0 0 24 24"><path d="M12 3l1.8 4.6L18.5 9l-4.7 1.4L12 15l-1.8-4.6L5.5 9l4.7-1.4Z"/></svg>Tejas says</h2>
+        <div class="card answer-card">
+          <div class="you" id="capYou"></div>
+          <div class="tejas" id="capTejas">Ask me anything: homework, a story, a quiz, the news, or “remind me at 7 pm”.</div>
+          <div class="chips" id="capChips"></div>
+        </div>
+      </section>
+
+      <div class="card status">
+        <div><span class="badge ok" id="liveBadge">Active</span>
+          <p id="statusText">Running on this computer. No internet needed, nothing leaves your home.</p></div>
+        <button class="ghost-btn" id="btnConnect2">Connect a screen <svg viewBox="0 0 24 24"><path d="m9 6 6 6-6 6"/></svg></button>
+      </div>
+
+      <div class="card voice">
+        <div class="voice-top"><span>Voice</span><span class="badge soft" id="voiceBadge">Ready</span></div>
+        <div class="voice-main"><b id="voiceBig">Ready</b><small id="voiceSmall">Tap the orb or press Space</small></div>
+        <canvas id="bars" aria-hidden="true"></canvas>
+      </div>
+
+      <div class="tiles">
+        <button class="tile" data-node="reminders"><span class="ti"><svg viewBox="0 0 24 24"><path d="M6 16V11a6 6 0 0 1 12 0v5l1.5 2h-15Z"/><path d="M10 20.5a2 2 0 0 0 4 0"/></svg></span><b id="tRem">0</b><small>Reminders<br>coming up</small></button>
+        <button class="tile" data-node="timers"><span class="ti"><svg viewBox="0 0 24 24"><circle cx="12" cy="13" r="7.5"/><path d="M12 9v4l2.5 2"/></svg></span><b id="tTim">0</b><small>Timers<br>running</small></button>
+        <button class="tile" data-node="mind"><span class="ti"><svg viewBox="0 0 24 24"><path d="M5 12.5l4 4 10-10"/></svg></span><b id="tMind">0</b><small>Things I<br>remember</small></button>
+        <button class="tile" data-node="news"><span class="ti"><svg viewBox="0 0 24 24"><rect x="3.5" y="5" width="17" height="14" rx="2"/><path d="M7 9h10M7 12.5h10"/></svg></span><b id="tNews">0</b><small>Saved<br>headlines</small></button>
+      </div>
+
+    </div>
+
+    <div class="askbox">
+      <form class="ask" id="askForm" autocomplete="off">
+        <input id="askInput" type="text" placeholder="Ask a question…" aria-label="Ask Tejas a question" maxlength="2000">
+        <button type="submit" class="send" aria-label="Send"><svg viewBox="0 0 24 24"><path d="M4 12h15M13 6l6 6-6 6"/></svg></button>
+      </form>
+      <div class="ask-row">
+        <button class="chipbtn" id="btnWho2"><span class="avatar xs" id="whoAvatar2">?</span><span id="whoName">Choose</span><svg viewBox="0 0 24 24"><path d="m7 10 5 5 5-5"/></svg></button>
+        <button class="chipbtn tog" id="togDeep" aria-pressed="false"><svg viewBox="0 0 24 24"><path d="M12 3l1.8 4.6L18.5 9l-4.7 1.4L12 15l-1.8-4.6L5.5 9l4.7-1.4Z"/></svg>Think hard</button>
+        <button class="chipbtn tog" id="togHands" aria-pressed="false"><svg viewBox="0 0 24 24"><path d="M3 12h2l2-5 3 10 3-14 3 12 2-3h3"/></svg>Hands-free</button>
+      </div>
+    </div>
+  </aside>
+</div>
+
+<!-- Overlays -->
+<div class="overlay" id="ovWho" hidden>
+  <div class="sheet center-sheet">
+    <h1 class="sheet-title">Who’s talking?</h1>
+    <div class="people" id="people"></div>
+  </div>
+</div>
+
+<div class="overlay" id="ovWelcome" hidden>
+  <div class="sheet">
+    <img src="icons/mark.png" alt="" class="sheet-mark">
+    <h1 class="sheet-title">Hi, I’m Tejas.</h1>
+    <p class="lead">I live on this computer, not on the internet. Let’s add the people in your family, so I know who I’m talking to.</p>
+    <form id="welcomeForm" class="form">
+      <div class="row2">
+        <label>Name<input name="name" required maxlength="40" placeholder="e.g. Aarav"></label>
+        <label>Age<input name="age" type="number" min="1" max="120" placeholder="9"></label>
+      </div>
+      <div class="row2">
+        <label>Class / grade<input name="grade" maxlength="30" placeholder="Class 4"></label>
+        <label>Language<select name="language"><option value="en">English</option><option value="hi">Hindi</option><option value="hinglish">Hinglish</option><option value="pa">Punjabi</option></select></label>
+      </div>
+      <label>Loves<input name="interests" maxlength="300" placeholder="cricket, space, dinosaurs"></label>
+      <div class="form-actions"><button class="btn primary" type="submit">Add person</button></div>
+    </form>
+    <div class="added" id="welcomeAdded"></div>
+    <div class="form-actions"><button class="btn" id="welcomeDone" disabled>All done, let’s talk</button></div>
+  </div>
+</div>
+
+<div class="overlay" id="ovConnect" hidden>
+  <div class="sheet">
+    <button class="close" data-close aria-label="Close">×</button>
+    <h1 class="sheet-title">Use Tejas on another screen</h1>
+    <p class="lead">Your phone, tablet or TV must be on the same home Wi-Fi. Scan the code, or type the address.</p>
+    <div class="qrs" id="qrs"></div>
+    <ol class="steps">
+      <li>The first time, the browser warns the page “isn’t private”. That’s normal: the lock is made by your own computer. Tap <b>Advanced</b>, then <b>Proceed</b>.</li>
+      <li>To remove the warning for good, install the <a href="/tejas-home-ca.crt" download>Tejas home certificate</a> on that device.</li>
+      <li>On a TV: open the browser, type the address with the remote, and use the arrow keys and OK button.</li>
+    </ol>
+  </div>
+</div>
+
+<div class="overlay" id="ovParent" hidden>
+  <div class="sheet wide">
+    <button class="close" data-close aria-label="Close">×</button>
+    <h1 class="sheet-title">Parent zone</h1>
+    <form id="pinForm" class="pin-form">
+      <p class="lead" id="pinLead">Enter your parent PIN.</p>
+      <input id="pinInput" type="password" inputmode="numeric" pattern="[0-9]*" maxlength="8" aria-label="Parent PIN" placeholder="••••">
+      <button class="btn primary" type="submit">Open</button>
+      <p class="err" id="pinErr"></p>
+    </form>
+    <div id="parentBody" hidden>
+      <div class="tabs" role="tablist">
+        <button class="tab on" data-tab="talks">Conversations</button>
+        <button class="tab" data-tab="family">Family</button>
+        <button class="tab" data-tab="mind">Memories</button>
+        <button class="tab" data-tab="settings">Settings</button>
+        <button class="tab" data-tab="library">Library</button>
+      </div>
+      <div class="tabpane" id="tab-talks">
+        <div class="row-inline"><select id="histWho" aria-label="Person"></select><button class="btn" id="histClear">Clear history</button></div>
+        <div class="history" id="history"></div>
+      </div>
+      <div class="tabpane" id="tab-family" hidden>
+        <div class="family" id="familyList"></div>
+        <form id="familyForm" class="form">
+          <h3>Add someone</h3>
+          <div class="row2"><label>Name<input name="name" required maxlength="40"></label><label>Age<input name="age" type="number" min="1" max="120"></label></div>
+          <div class="row2"><label>Class / grade<input name="grade" maxlength="30"></label>
+            <label>Language<select name="language"><option value="en">English</option><option value="hi">Hindi</option><option value="hinglish">Hinglish</option><option value="pa">Punjabi</option></select></label></div>
+          <label>Loves<input name="interests" maxlength="300"></label>
+          <div class="form-actions"><button class="btn primary">Add</button></div>
+        </form>
+      </div>
+      <div class="tabpane" id="tab-mind" hidden>
+        <div class="row-inline"><select id="mindWho" aria-label="Person"></select></div>
+        <ul class="facts big" id="mindFacts"></ul>
+      </div>
+      <div class="tabpane" id="tab-settings" hidden>
+        <form id="settingsForm" class="form">
+          <div class="row2">
+            <label>Assistant name<input name="assistant.name" maxlength="20"></label>
+            <label>Thinking model (Ollama)<input name="llm.model" maxlength="60"></label>
+          </div>
+          <div class="row2">
+            <label>English voice<select name="tts.voices.en" id="voiceEn"></select></label>
+            <label>Voice speed<input name="tts.speed" type="number" step="0.05" min="0.7" max="1.3"></label>
+          </div>
+          <label class="check"><input type="checkbox" name="assistant.hint_first"> Homework: give hints before answers</label>
+          <label class="check"><input type="checkbox" name="assistant.deep_think_default"> Always think hard (slower, more careful)</label>
+          <div class="form-actions"><button class="btn primary">Save settings</button><span class="ok-msg" id="setOk"></span></div>
+        </form>
+        <form id="newPinForm" class="form">
+          <h3>Parent PIN</h3>
+          <div class="row2"><label>New PIN (4–8 digits)<input name="pin" type="password" inputmode="numeric" maxlength="8" required></label></div>
+          <div class="form-actions"><button class="btn">Set PIN</button><span class="ok-msg" id="pinOk"></span></div>
+        </form>
+      </div>
+      <div class="tabpane" id="tab-library" hidden>
+        <p class="lead">Put school books, notes and stories (PDF, TXT, MD) in this folder on the home computer, then press Refresh. Tejas can then look things up in them.</p>
+        <code class="path" id="libPath"></code>
+        <div class="row-inline"><button class="btn" id="libReindex">Refresh library</button><span class="ok-msg" id="libOk"></span></div>
+        <ul class="list" id="libFiles"></ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="ovAsk" hidden>
+  <div class="sheet small">
+    <button class="close" data-close aria-label="Close">×</button>
+    <h1 class="sheet-title" id="askTitle"></h1>
+    <form id="miniForm" class="form"></form>
+  </div>
+</div>
+
+<div class="toasts" id="toasts" aria-live="assertive"></div>
+<audio id="player" hidden></audio>
+<script src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,28 @@
+[project]
+name = "tejas-ai"
+version = "1.0.0"
+description = "An offline, private AI home assistant for the whole family: listens, talks, teaches, reminds."
+readme = "README.md"
+license = { text = "MIT" }
+requires-python = ">=3.10"
+dependencies = [
+  "fastapi>=0.110", "uvicorn>=0.29", "httpx>=0.27", "pydantic>=2.6", "python-multipart>=0.0.9",
+  "sympy>=1.12", "cryptography>=42", "segno>=1.6", "pypdf>=4.0", "defusedxml>=0.7",
+  "faster-whisper>=1.0", "piper-tts>=1.3",
+]
+
+[project.optional-dependencies]
+test = ["pytest>=8"]
+
+[project.scripts]
+tejas-ai = "tejas_ai.__main__:main"
+
+[tool.setuptools.packages.find]
+include = ["tejas_ai*"]
+
+[tool.setuptools.package-data]
+tejas_ai = ["web/*", "web/fonts/*", "web/icons/*"]
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
