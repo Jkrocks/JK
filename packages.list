@@ -78,6 +78,11 @@ fonts-noto-ui-core
 fonts-indic
 locales
 
+## Help and task manager (from the GUI checklist)
+khelpcenter
+plasma-systemmonitor
+krunner
+
 ## Handy tools
 kdialog
 partitionmanager
