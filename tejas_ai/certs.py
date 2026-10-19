@@ -106,5 +106,13 @@ def ensure(folder: Path) -> tuple[Path, Path, Path]:
             .add_extension(x509.ExtendedKeyUsage([ExtendedKeyUsageOID.SERVER_AUTH]), critical=False)
             .sign(ca_k, hashes.SHA256()))
     _write_key(k, key)
-    crt.write_bytes(cert.public_bytes(serialization.Encoding.PEM))
+    # Full chain (this computer + home CA) so the Tejas apps can check it against the pinned CA.
+    crt.write_bytes(cert.public_bytes(serialization.Encoding.PEM) + ca_crt.read_bytes())
     return crt, key, ca_crt
+
+
+def ca_fingerprint(ca_crt: Path) -> str:
+    """Short code shown on the Connect screen, so families can check the apps paired with the right computer."""
+    c = x509.load_pem_x509_certificate(ca_crt.read_bytes())
+    h = c.fingerprint(hashes.SHA256()).hex().upper()
+    return " ".join(h[i:i + 4] for i in range(0, 16, 4))

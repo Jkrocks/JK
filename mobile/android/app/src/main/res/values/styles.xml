@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="Tejas" parent="android:Theme.Material.NoActionBar">
+        <item name="android:windowBackground">@android:color/black</item>
+        <item name="android:statusBarColor">#050B0B</item>
+        <item name="android:navigationBarColor">#050B0B</item>
+        <item name="android:colorAccent">#74F0C9</item>
+    </style>
+</resources>

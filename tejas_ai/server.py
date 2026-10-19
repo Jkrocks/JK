@@ -356,7 +356,9 @@ def create_app(data_dir: Path | None = None, llm=None) -> FastAPI:
     async def connect():
         port = cfg.get("server.https_port", 8443)
         ips = certs.lan_ips()
-        return {"urls": [f"https://{ip}:{port}" for ip in ips], "ca": "/tejas-home-ca.crt"}
+        ca_path = root / "certs" / "tejas-home-ca.crt"
+        code = certs.ca_fingerprint(ca_path) if ca_path.exists() else None
+        return {"urls": [f"https://{ip}:{port}" for ip in ips], "ca": "/tejas-home-ca.crt", "code": code}
 
     @app.get("/api/qr.svg")
     async def qr(url: str):

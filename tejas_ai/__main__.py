@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import argparse
 import asyncio
+import multiprocessing
 import sys
 
 import uvicorn
@@ -15,7 +16,34 @@ from . import __version__, certs
 from .config import Config, home
 
 
+def make_servers(host=None, http_port=None, https_port=None, use_https=None):
+    """Build the uvicorn servers (plain http for this computer, https for other screens)."""
+    root = home()
+    cfg = Config(root / "config.json")
+    host = host or cfg.get("server.host", "0.0.0.0")
+    http_port = http_port or cfg.get("server.http_port", 8000)
+    https_port = https_port or cfg.get("server.https_port", 8443)
+    if use_https is None:
+        use_https = cfg.get("server.https", True)
+
+    from .server import create_app
+    app = create_app()
+    servers = [uvicorn.Server(uvicorn.Config(app, host=host, port=http_port, log_level="warning"))]
+    urls = {"local": f"http://localhost:{http_port}", "lan": []}
+    if use_https:
+        crt, key, _ = certs.ensure(root / "certs")
+        servers.append(uvicorn.Server(uvicorn.Config(app, host=host, port=https_port, log_level="warning",
+                                                     ssl_certfile=str(crt), ssl_keyfile=str(key))))
+        urls["lan"] = [f"https://{ip}:{https_port}" for ip in certs.lan_ips()]
+    return servers, urls
+
+
+async def serve(servers) -> None:
+    await asyncio.gather(*(s.serve() for s in servers))
+
+
 def main() -> None:
+    multiprocessing.freeze_support()
     ap = argparse.ArgumentParser(prog="tejas-ai", description="Tejas AI home assistant")
     ap.add_argument("--host", help="address to listen on (default: all home network addresses)")
     ap.add_argument("--port", type=int, help="plain http port for this computer (default 8000)")
@@ -23,31 +51,13 @@ def main() -> None:
     ap.add_argument("--no-https", action="store_true", help="only serve plain http")
     args = ap.parse_args()
 
-    root = home()
-    cfg = Config(root / "config.json")
-    host = args.host or cfg.get("server.host", "0.0.0.0")
-    http_port = args.port or cfg.get("server.http_port", 8000)
-    https_port = args.https_port or cfg.get("server.https_port", 8443)
-    use_https = cfg.get("server.https", True) and not args.no_https
-
-    from .server import create_app
-    app = create_app()
-
-    servers = [uvicorn.Server(uvicorn.Config(app, host=host, port=http_port, log_level="warning"))]
-    print(f"\n  Tejas AI {__version__}\n  On this computer:   http://localhost:{http_port}")
-    if use_https:
-        crt, key, _ = certs.ensure(root / "certs")
-        servers.append(uvicorn.Server(uvicorn.Config(app, host=host, port=https_port, log_level="warning",
-                                                     ssl_certfile=str(crt), ssl_keyfile=str(key))))
-        for ip in certs.lan_ips():
-            print(f"  Phones, TV, tablets: https://{ip}:{https_port}")
-    print(f"  Data folder:        {root}\n  Press Ctrl+C to stop.\n")
-
-    async def run():
-        await asyncio.gather(*(s.serve() for s in servers))
-
+    servers, urls = make_servers(args.host, args.port, args.https_port, False if args.no_https else None)
+    print(f"\n  Tejas AI {__version__}\n  On this computer:   {urls['local']}")
+    for u in urls["lan"]:
+        print(f"  Phones, TV, tablets: {u}")
+    print(f"  Data folder:        {home()}\n  Press Ctrl+C to stop.\n")
     try:
-        asyncio.run(run())
+        asyncio.run(serve(servers))
     except KeyboardInterrupt:
         sys.exit(0)
 

@@ -5,3 +5,9 @@ __pycache__/
 *.egg-info/
 build/
 dist/
+mobile/android/.gradle/
+mobile/android/build/
+mobile/android/app/build/
+mobile/ios/build/
+mobile/ios/*.xcodeproj/
+mobile/ios/Sources/Info.plist

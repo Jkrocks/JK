@@ -601,9 +601,11 @@ async function openConnect() {
     const c = await api("/api/connect");
     $("#qrs").innerHTML = c.urls.length ? c.urls.map((u) => `<div class="qr"><img alt="QR code for ${esc(u)}" src="/api/qr.svg?url=${encodeURIComponent(u)}"><code>${esc(u)}</code></div>`).join("")
       : "<p class='lead'>This computer isn’t on a network right now.</p>";
+    if (c.code) { $("#pairCode").hidden = false; $("#pairCode").innerHTML = `Pairing code for the Tejas phone and TV apps:<b>${esc(c.code)}</b>`; }
   } catch {}
 }
 $("#btnConnect").onclick = openConnect;
+if (window.TejasApp) { $("#appSwitch").hidden = false; $("#btnForget").onclick = () => window.TejasApp.forget(); }
 
 /* Parent zone */
 $("#btnParent").onclick = () => {

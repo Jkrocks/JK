@@ -5,6 +5,10 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#050b0b">
 <meta name="color-scheme" content="dark">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Tejas">
 <title>Tejas AI</title>
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icons/mark.png">
@@ -154,6 +158,8 @@
     <h1 class="sheet-title">Use Tejas on another screen</h1>
     <p class="lead">Your phone, tablet or TV must be on the same home Wi-Fi. Scan the code, or type the address.</p>
     <div class="qrs" id="qrs"></div>
+    <p class="lead pair-code" id="pairCode" hidden></p>
+    <div class="form-actions" id="appSwitch" hidden><button class="btn" id="btnForget">Pair this app with a different computer</button></div>
     <ol class="steps">
       <li>The first time, the browser warns the page “isn’t private”. That’s normal: the lock is made by your own computer. Tap <b>Advanced</b>, then <b>Proceed</b>.</li>
       <li>To remove the warning for good, install the <a href="/tejas-home-ca.crt" download>Tejas home certificate</a> on that device.</li>

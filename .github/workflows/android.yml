@@ -1,0 +1,31 @@
+name: Android app
+on:
+  push:
+    paths: ["mobile/**", ".github/workflows/android.yml"]
+  workflow_dispatch:
+
+jobs:
+  apk:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: "8.9"
+      - name: Build APK
+        working-directory: mobile/android
+        run: gradle --no-daemon assembleRelease
+      - name: Rename
+        run: |
+          mkdir out
+          cp mobile/android/app/build/outputs/apk/release/app-release.apk out/Tejas-AI-Android.apk
+          ls -la out
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Tejas-AI-Android
+          path: out/Tejas-AI-Android.apk
+          retention-days: 30

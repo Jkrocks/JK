@@ -42,6 +42,17 @@ A mind‑map interface: the living orb on the left (it breathes like a heartbeat
 - **TV:** arrow keys / remote D‑pad move between buttons, OK presses, Back closes. Big text on large screens.
 - **Phone:** one scrolling column with the ask bar pinned at the bottom. Add it to your home screen for a full‑screen app.
 
+## Apps
+
+| Device | App | How to get it |
+|---|---|---|
+| **Windows / Mac / Linux** (the home computer) | **Tejas AI desktop app**: runs Tejas, one-click download of brain, ears and voice, opens Tejas in its own window | GitHub → Actions → *Desktop app* → download `Tejas-AI-Windows` / `-macOS` / `-Linux`. Mac: right-click → Open the first time (the app isn't notarised yet). |
+| **Android phones, tablets & Android TV** | **Tejas AI** app: finds the home computer on Wi‑Fi by itself, pairs with a code, uses the phone’s mic | Actions → *Android app* → `Tejas-AI-Android.apk`. Open it on the phone and allow “install unknown apps”. On a TV, sideload with a USB stick or “Send files to TV”. |
+| **iPhone & iPad** | **Tejas AI** app (same as Android) | Actions → *iOS app* → `Tejas-AI-iOS-unsigned.ipa`, install with Sideloadly/AltStore using your Apple ID, or open the project in Xcode (`mobile/ios`, `xcodegen generate`). No Apple account? Open the https address in Safari → Share → **Add to Home Screen**: it runs full-screen like an app. |
+| **Any smart-TV browser** | The web app | Open the https address; use the remote’s arrows and OK. |
+
+**Pairing:** the apps show a short code (like `6E2B 6AA2 B0AD 44E2`). Check it matches the code on the home computer (Tejas → *Connect a screen*, or the desktop app window). From then on the app only trusts that computer.
+
 ## What you need
 
 - A home computer that stays on: Windows 10/11, macOS, or Linux (incl. **TEJAS OS**).
@@ -104,6 +115,8 @@ python -m tejas_ai --help
 - `tejas_ai/llm.py` – Ollama and OpenAI‑compatible (llama.cpp, LM Studio) streaming with tools
 - `tejas_ai/speech.py` – Whisper ears, Piper voice
 - `tejas_ai/web/` – the app (no build step, no CDN)
+- `tejas_ai/desktop.py` – desktop app (setup panel + app window); built with PyInstaller
+- `mobile/android/` – Android app (Kotlin, no dependencies); `mobile/ios/` – iOS app (SwiftUI, XcodeGen); `mobile/shared/connect.html` – pairing screen
 
 ## Roadmap
 

@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Connect to Tejas</title>
+<style>
+  :root{--text:#e9f2f0;--dim:#8ea6a1;--mint:#74f0c9;--emerald:#2fc79a;--gold:#e8c88a;--edge:rgba(170,255,235,.1);--bad:#ff7b72}
+  *{box-sizing:border-box}
+  html,body{margin:0;min-height:100%;background:#050b0b;color:var(--text);font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;-webkit-font-smoothing:antialiased}
+  body{background:radial-gradient(60% 50% at 50% 18%,rgba(140,120,255,.18),transparent 70%),radial-gradient(80% 60% at 50% 100%,rgba(46,120,100,.18),transparent 60%),#050b0b;
+       padding:calc(28px + env(safe-area-inset-top)) 20px calc(28px + env(safe-area-inset-bottom))}
+  main{max-width:560px;margin:0 auto}
+  .orb{width:120px;height:120px;margin:10px auto 18px;border-radius:50%;
+       background:radial-gradient(circle at 35% 30%,#f6f0ff,#b9a5ff 35%,#6c54e6 75%,#2b1f73);
+       box-shadow:0 0 0 14px rgba(150,130,255,.07),0 0 80px rgba(150,130,255,.55);animation:beat 1.15s infinite}
+  @keyframes beat{0%,100%{transform:scale(1)}8%{transform:scale(1.04)}16%{transform:scale(1)}24%{transform:scale(1.025)}32%{transform:scale(1)}}
+  h1{text-align:center;font-size:26px;margin:0 0 6px;font-weight:650;letter-spacing:-.01em}
+  p.lead{text-align:center;color:var(--dim);margin:0 0 22px;line-height:1.5}
+  .card{border-radius:18px;background:linear-gradient(180deg,rgba(46,80,76,.4),rgba(14,28,26,.55));border:1px solid var(--edge);padding:16px;margin-bottom:14px}
+  .card h2{font-size:14px;font-weight:600;margin:0 0 10px;color:#cfe0dc}
+  .found{display:flex;flex-direction:column;gap:8px}
+  button{font:inherit;color:inherit;cursor:pointer;border:0}
+  .pc{display:flex;align-items:center;gap:12px;width:100%;text-align:left;padding:14px;border-radius:14px;background:rgba(0,0,0,.3);border:1px solid var(--edge)}
+  .pc b{display:block;font-weight:600}.pc small{color:var(--dim)}
+  .pc i{width:10px;height:10px;border-radius:50%;background:var(--mint);box-shadow:0 0 12px var(--mint);flex:none}
+  .pc:focus,.btn:focus,input:focus{outline:2px solid var(--mint);outline-offset:2px}
+  .muted{color:var(--dim);font-size:14px;line-height:1.5}
+  .spin{display:inline-block;width:14px;height:14px;border:2px solid rgba(255,255,255,.2);border-top-color:var(--mint);border-radius:50%;animation:s 1s linear infinite;vertical-align:-2px;margin-right:8px}
+  @keyframes s{to{transform:rotate(360deg)}}
+  .row{display:flex;gap:8px}
+  input{flex:1;min-width:0;height:48px;border-radius:12px;border:1px solid var(--edge);background:rgba(0,0,0,.35);color:var(--text);padding:0 14px;font-size:16px}
+  .btn{height:48px;padding:0 18px;border-radius:12px;font-weight:600;background:rgba(255,255,255,.06);border:1px solid var(--edge)}
+  .btn.primary{background:linear-gradient(180deg,#c6ffe9,var(--emerald));color:#06201a;border:0}
+  .code{white-space:nowrap;font:600 clamp(18px,6vw,26px)/1.2 ui-monospace,Menlo,Consolas,monospace;letter-spacing:.06em;text-align:center;padding:16px;border-radius:14px;background:rgba(0,0,0,.35);color:var(--gold);margin:12px 0}
+  .msg{border-color:rgba(255,123,114,.35);color:#ffd2ce}
+  .err{color:var(--bad);font-size:14px;margin-top:8px}
+</style>
+</head>
+<body>
+<main>
+  <div class="orb" aria-hidden="true"></div>
+  <h1>Connect to Tejas</h1>
+  <p class="lead">Tejas lives on your home computer. Let’s find it on your Wi‑Fi.</p>
+
+  <div class="card msg" id="msg" hidden></div>
+
+  <section class="card" id="pair" hidden>
+    <h2 id="pairTitle">Pair with Tejas</h2>
+    <p class="muted">Check this code matches the one on the home computer (Tejas → <b>Connect a screen</b>):</p>
+    <div class="code" id="code"></div>
+    <div class="row"><button class="btn primary" id="pairYes" style="flex:1">It matches. Pair and open</button><button class="btn" id="pairNo">Back</button></div>
+  </section>
+
+  <section class="card" id="finder">
+    <h2>Computers with Tejas</h2>
+    <div class="found" id="found"></div>
+    <p class="muted" id="scanState"><span class="spin"></span>Looking on your Wi‑Fi…</p>
+    <button class="btn" id="rescan" hidden>Look again</button>
+  </section>
+
+  <section class="card">
+    <h2>Or type its address</h2>
+    <form class="row" id="manual" autocomplete="off">
+      <input id="addr" inputmode="url" placeholder="192.168.1.20" aria-label="Home computer address">
+      <button class="btn primary">Connect</button>
+    </form>
+    <p class="err" id="err"></p>
+    <p class="muted">The address is shown in the Tejas window on the home computer.</p>
+  </section>
+</main>
+<script>
+"use strict";
+// iOS: the app talks to us through webkit message handlers; give it the same shape as Android.
+if (!window.TejasApp && window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.tejas) {
+  const post = (cmd, arg) => window.webkit.messageHandlers.tejas.postMessage({ cmd, arg: arg || "" });
+  window.TejasApp = { scan: () => post("scan"), probe: (u) => post("probe", u), trust: (u) => post("trust", u), forget: () => post("forget"), platform: () => "ios" };
+}
+const $ = (s) => document.querySelector(s);
+const esc = (s) => String(s || "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+let found = 0, pairing = null;
+
+if (location.hash.length > 1) { $("#msg").hidden = false; $("#msg").textContent = decodeURIComponent(location.hash.slice(1)); }
+
+function scan() {
+  found = 0; $("#found").innerHTML = ""; $("#rescan").hidden = true;
+  $("#scanState").innerHTML = '<span class="spin"></span>Looking on your Wi‑Fi…';
+  if (window.TejasApp) TejasApp.scan(); else $("#scanState").textContent = "Open this page inside the Tejas app.";
+}
+window.onFound = (o) => {
+  found++;
+  const b = document.createElement("button");
+  b.className = "pc";
+  b.innerHTML = `<i></i><span><b>${esc(o.name)}</b><small>${esc(o.url.replace("https://", ""))}</small></span>`;
+  b.onclick = () => probe(o.url);
+  $("#found").append(b);
+  if (found === 1) b.focus();
+};
+window.onScanDone = (o) => {
+  $("#rescan").hidden = false;
+  $("#scanState").textContent = (o && o.error) ? o.error : found ? "Tap your home computer." : "No Tejas found yet. Make sure the home computer is on, Tejas is open, and you’re on the same Wi‑Fi.";
+};
+function probe(url) { $("#err").textContent = ""; $("#scanState").innerHTML = '<span class="spin"></span>Checking…'; TejasApp.probe(url); }
+window.onProbe = (o) => {
+  $("#scanState").textContent = found ? "Tap your home computer." : "";
+  if (!o.ok) { $("#err").textContent = o.error; return; }
+  pairing = o.url;
+  $("#pairTitle").textContent = `Pair with ${o.name} at ${o.url.replace("https://", "")}`;
+  $("#code").textContent = o.code;
+  $("#pair").hidden = false; $("#finder").hidden = true;
+  $("#pairYes").focus();
+};
+$("#pairYes").onclick = () => pairing && TejasApp.trust(pairing);
+$("#pairNo").onclick = () => { $("#pair").hidden = true; $("#finder").hidden = false; pairing = null; };
+$("#rescan").onclick = scan;
+$("#manual").onsubmit = (e) => { e.preventDefault(); const v = $("#addr").value.trim(); if (v) probe(v); };
+scan();
+</script>
+</body>
+</html>

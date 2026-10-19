@@ -1,0 +1,83 @@
+name: Desktop app
+on:
+  push:
+  workflow_dispatch:
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            name: Tejas-AI-Windows
+          - os: macos-latest
+            name: Tejas-AI-macOS
+          - os: ubuntu-22.04
+            name: Tejas-AI-Linux
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt pyinstaller pillow
+      - name: Build the app
+        shell: bash
+        run: |
+          SEP=":"; [ "$RUNNER_OS" = "Windows" ] && SEP=";"
+          pyinstaller --noconfirm --windowed --name "Tejas AI" \
+            --icon tejas_ai/web/icons/icon-512.png \
+            --paths . --add-data "tejas_ai/web${SEP}tejas_ai/web" \
+            --collect-submodules tejas_ai --collect-submodules uvicorn --hidden-import sympy \
+            --collect-all faster_whisper --collect-all ctranslate2 --collect-all onnxruntime \
+            --collect-all piper --collect-all av --collect-all tokenizers \
+            --osx-bundle-identifier ai.tejas.desktop \
+            desktop/tejas_desktop.py
+      - name: Smoke test (server starts and does maths)
+        shell: bash
+        env:
+          TEJAS_OFFLINE: "1"
+        run: |
+          case "$RUNNER_OS" in
+            Windows) BIN="dist/Tejas AI/Tejas AI.exe" ;;
+            macOS)   BIN="dist/Tejas AI.app/Contents/MacOS/Tejas AI" ;;
+            *)       BIN="dist/Tejas AI/Tejas AI" ;;
+          esac
+          python - "$BIN" <<'EOF'
+          import json, os, subprocess, sys, time, urllib.request
+          env = dict(os.environ, TEJAS_AI_HOME=os.path.abspath("smoke-home"))
+          # No screen on CI runners: the app falls back to a plain server when it can't open its window.
+          p = subprocess.Popen([sys.argv[1]], env=env, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+          ok = False
+          for _ in range(90):
+              time.sleep(1)
+              try:
+                  s = json.load(urllib.request.urlopen("http://127.0.0.1:8000/api/status", timeout=2))
+                  r = urllib.request.urlopen(urllib.request.Request("http://127.0.0.1:8000/api/chat",
+                      data=b'{"text":"what is 245 times 37"}', headers={"Content-Type": "application/json"}), timeout=60).read().decode()
+                  print(s["version"], r.splitlines()[0]); ok = "9065" in r; break
+              except Exception as e:
+                  last = e
+          p.kill()
+          if not ok:
+              print(p.stdout.read().decode(errors="ignore")[-3000:]); sys.exit(f"smoke test failed: {last if not ok else ''}")
+          EOF
+      - name: Package
+        shell: bash
+        run: |
+          mkdir out
+          case "$RUNNER_OS" in
+            Windows) 7z a -tzip "out/${{ matrix.name }}.zip" "./dist/Tejas AI" >/dev/null ;;
+            macOS)   ditto -c -k --keepParent "dist/Tejas AI.app" "out/${{ matrix.name }}.zip" ;;
+            *)       tar -C dist -czf "out/${{ matrix.name }}.tar.gz" "Tejas AI" ;;
+          esac
+          ls -la out
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.name }}
+          path: out/*
+          retention-days: 30
