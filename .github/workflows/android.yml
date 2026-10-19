@@ -4,6 +4,9 @@ on:
     paths: ["mobile/**", ".github/workflows/android.yml"]
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 jobs:
   apk:
     runs-on: ubuntu-24.04
@@ -29,3 +32,8 @@ jobs:
           name: Tejas-AI-Android
           path: out/Tejas-AI-Android.apk
           retention-days: 30
+      - name: Publish to the Tejas AI release (direct download link)
+        if: github.ref == 'refs/heads/tejas-ai'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: bash .github/release.sh out/Tejas-AI-Android.apk

@@ -3,6 +3,9 @@ on:
   push:
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 jobs:
   build:
     strategy:
@@ -52,7 +55,7 @@ jobs:
           env = dict(os.environ, TEJAS_AI_HOME=os.path.abspath("smoke-home"))
           # No screen on CI runners: the app falls back to a plain server when it can't open its window.
           p = subprocess.Popen([sys.argv[1]], env=env, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-          ok = False
+          ok = False; last = None
           for _ in range(90):
               time.sleep(1)
               try:
@@ -64,7 +67,14 @@ jobs:
                   last = e
           p.kill()
           if not ok:
-              print(p.stdout.read().decode(errors="ignore")[-3000:]); sys.exit(f"smoke test failed: {last if not ok else ''}")
+              out = p.stdout.read().decode(errors="ignore")[-2500:]
+              logf = os.path.join("smoke-home", "desktop.log")
+              if os.path.exists(logf):
+                  out += "\n--- desktop.log ---\n" + open(logf, encoding="utf-8", errors="ignore").read()[-2500:]
+              print(out)
+              msg = (f"smoke test failed: {last}\n{out}").replace("%", "%25").replace("\r", "").replace("\n", "%0A")
+              print(f"::error title=Smoke test::{msg}")
+              sys.exit(1)
           EOF
       - name: Package
         shell: bash
@@ -81,3 +91,10 @@ jobs:
           name: ${{ matrix.name }}
           path: out/*
           retention-days: 30
+      - name: Publish to the Tejas AI release (direct download links)
+        if: github.ref == 'refs/heads/tejas-ai'
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          bash .github/release.sh out/*

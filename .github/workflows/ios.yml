@@ -4,6 +4,9 @@ on:
     paths: ["mobile/**", ".github/workflows/ios.yml"]
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 jobs:
   ipa:
     runs-on: macos-15
@@ -33,3 +36,35 @@ jobs:
           name: Tejas-AI-iOS
           path: mobile/ios/out/Tejas-AI-iOS-unsigned.ipa
           retention-days: 30
+      - name: AltStore / SideStore source
+        working-directory: mobile/ios
+        run: |
+          python3 - <<'PY'
+          import json, os, datetime
+          tag = "tejas-ai-v1.0.0"
+          base = f"https://github.com/Jkrocks/JK/releases/download/{tag}"
+          ipa = "out/Tejas-AI-iOS-unsigned.ipa"
+          size = os.path.getsize(ipa)
+          today = datetime.date.today().isoformat()
+          icon = "https://raw.githubusercontent.com/Jkrocks/JK/tejas-ai/mobile/ios/Resources/Assets.xcassets/AppIcon.appiconset/icon-1024.png"
+          desc = ("Tejas is your family's offline AI companion. It listens, talks back in a warm voice, helps with homework, "
+                  "solves maths exactly, tells stories, sets reminders and reads the news. Its brain runs on your own home "
+                  "computer (Tejas desktop app); this app finds it on your Wi-Fi.")
+          src = {"name": "Tejas AI", "identifier": "ai.tejas.source", "subtitle": "Family home assistant", "iconURL": icon,
+                 "website": "https://github.com/Jkrocks/JK/tree/tejas-ai", "tintColor": "74F0C9", "news": [],
+                 "apps": [{"name": "Tejas AI", "bundleIdentifier": "ai.tejas.app", "developerName": "Jaspal Khalsa",
+                           "subtitle": "Your family's offline companion", "localizedDescription": desc, "iconURL": icon,
+                           "tintColor": "74F0C9", "version": "1.0.0", "versionDate": today,
+                           "downloadURL": f"{base}/Tejas-AI-iOS-unsigned.ipa", "size": size,
+                           "versions": [{"version": "1.0.0", "buildVersion": "1", "date": today, "minOSVersion": "15.0",
+                                         "downloadURL": f"{base}/Tejas-AI-iOS-unsigned.ipa", "size": size}],
+                           "appPermissions": {"entitlements": [], "privacy": {
+                               "NSMicrophoneUsageDescription": "Tejas listens when you tap the orb, so you can talk to it.",
+                               "NSLocalNetworkUsageDescription": "Tejas looks for your family's home computer on your Wi-Fi."}}}]}
+          json.dump(src, open("out/altstore-source.json", "w"), indent=2)
+          PY
+      - name: Publish to the Tejas AI release (direct download links)
+        if: github.ref == 'refs/heads/tejas-ai'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: bash .github/release.sh mobile/ios/out/Tejas-AI-iOS-unsigned.ipa mobile/ios/out/altstore-source.json
