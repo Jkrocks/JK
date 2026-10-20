@@ -311,6 +311,7 @@ let rec = null;
 async function listen() {
   if (rec) { rec.stopNow(); return; }
   voiceOut.stop();
+  if (window.TEJAS_WEB) return listenWeb();
   if (!window.isSecureContext || !navigator.mediaDevices) {
     toast("Microphone needs the secure address", "Open Tejas with the https:// address shown in Connect, then allow the microphone.", { label: "Show me", fn: openConnect });
     return;
@@ -360,6 +361,42 @@ async function listen() {
     } catch (e) { setState("idle"); toast("I couldn’t hear that", e.message); }
   };
   mr.start(250); tick();
+}
+
+/* The web app has no home computer: the browser's own speech recognition does the listening. */
+function listenWeb() {
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  const dictate = () => {
+    const box = $("#askInput"); box.focus();
+    toast("Talk with your keyboard", /Android|iPhone|iPad/i.test(navigator.userAgent)
+      ? "Tap the microphone on your keyboard, speak, then tap send. I’ll answer out loud."
+      : "Press Windows key + H (on a Mac, press Fn twice), speak, then press Enter. I’ll answer out loud.", null, 12000);
+  };
+  if (!SR || window.TEJAS_WEB_NO_SR) return dictate();
+  const r = new SR();
+  const lang = S.who && S.who.language;
+  r.lang = lang === "hi" ? "hi-IN" : lang === "pa" ? "pa-IN" : "en-IN";
+  r.interimResults = true; r.continuous = false; r.maxAlternatives = 1;
+  let finalText = "", failed = null;
+  r.onresult = (e) => {
+    let interim = "";
+    for (let i = e.resultIndex; i < e.results.length; i++) {
+      if (e.results[i].isFinal) finalText += e.results[i][0].transcript; else interim += e.results[i][0].transcript;
+    }
+    $("#capYou").textContent = (finalText + " " + interim).trim() || "…";
+  };
+  r.onerror = (e) => { failed = e.error; };
+  r.onend = () => {
+    rec = null;
+    if (finalText.trim()) return ask(finalText.trim());
+    setState("idle");
+    if (failed === "not-allowed" || failed === "service-not-allowed" || failed === "network" || failed === "audio-capture") {
+      window.TEJAS_WEB_NO_SR = true; dictate();
+    } else if (S.hands) { S.hands = false; syncToggles(); toast("Hands-free paused", "I didn’t hear anything, so I stopped listening."); }
+  };
+  rec = { stopNow: () => { try { r.stop(); } catch {} } };
+  setState("listening"); $("#capYou").textContent = "…";
+  try { r.start(); } catch { rec = null; setState("idle"); window.TEJAS_WEB_NO_SR = true; dictate(); }
 }
 
 /* ---------------------------------------------------------------- Timers */
@@ -660,7 +697,10 @@ async function loadHistory() {
 }
 $("#histWho").onchange = loadHistory;
 $("#histClear").onclick = async () => { if (confirmBox()) { await api(`/api/history/${$("#histWho").value}`, { method: "DELETE" }); loadHistory(); } };
-function confirmBox() { return window.confirm ? window.confirm("Are you sure?") : true; }
+function confirmBox() {
+  if (window.TEJAS_WEB) return true; // pop-up boxes are blocked inside the web app frame
+  return window.confirm ? window.confirm("Are you sure?") : true;
+}
 async function loadFamily() {
   await loadProfiles();
   $("#familyList").innerHTML = S.profiles.map((p) => `<div class="fam"><span class="avatar">${esc(initials(p.name))}</span><div>${esc(p.name)}<small>${p.age ? p.age + " yrs" : ""}${p.grade ? " · " + esc(p.grade) : ""}${p.interests ? " · loves " + esc(p.interests) : ""}</small></div><button data-id="${p.id}">Remove</button></div>`).join("");
@@ -777,7 +817,7 @@ document.addEventListener("keydown", (e) => {
     openConnect(); const t = $('#connectTabs .tab[data-ct="iphone"]'); if (t) t.click();
     history.replaceState(null, "", location.pathname);
   }
-  if ("serviceWorker" in navigator && window.isSecureContext) navigator.serviceWorker.register("sw.js").catch(() => {});
+  if (!window.TEJAS_WEB && "serviceWorker" in navigator && window.isSecureContext) navigator.serviceWorker.register("sw.js").catch(() => {});
 })();
 
 /* Browsers only allow sound after the first tap or key press: unlock it then. */
