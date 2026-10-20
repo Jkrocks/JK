@@ -169,6 +169,8 @@ def run_gui(root) -> None:
     setup_btn = button(btns, "Download brain, ears & voice", lambda: start_setup())
     setup_btn.pack(side="left", padx=8)
     ollama_btn = button(btns, "1. Get Ollama", lambda: webbrowser.open(setup.ollama_download_url()), primary=True)
+    quit_btn = button(btns, "Quit Tejas", lambda: quit_all())
+    quit_btn.pack(side="right")
 
     phone = tk.Frame(root, bg=BG)
     phone.pack(fill="x", padx=24, pady=(14, 0))
@@ -177,7 +179,7 @@ def run_gui(root) -> None:
     lan = label(phone, "", 10, DIM, wraplength=330)
     lan.pack(side="left", fill="x", expand=True)
     qr_state = {"url": None, "img": None}
-    label(root, "Keep this window open while your family uses Tejas. Closing it stops Tejas.", 9, DIM,
+    label(root, "Closing this window keeps Tejas running (it just tucks away). Use Quit Tejas to stop it.", 9, DIM,
           wraplength=540).pack(fill="x", padx=24, side="bottom", pady=14)
 
     state = {"busy": False}
@@ -259,9 +261,14 @@ def run_gui(root) -> None:
                 root.after(500, refresh)
         threading.Thread(target=work, daemon=True).start()
 
-    def on_close():
+    def quit_all():
         server.stop()
         root.after(300, root.destroy)
+
+    def on_close():
+        # Closing the panel must not switch Tejas off: the family is still using it on the TV and phones.
+        log("panel closed: Tejas keeps running")
+        root.iconify()
 
     root.protocol("WM_DELETE_WINDOW", on_close)
 

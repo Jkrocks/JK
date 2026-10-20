@@ -65,7 +65,11 @@ jobs:
                       print(f"status ok after {time.time() - t0:.0f}s: {s['version']}"); stage = "chat"
                   r = urllib.request.urlopen(urllib.request.Request("http://127.0.0.1:8000/api/chat",
                       data=b'{"text":"what is 245 times 37"}', headers={"Content-Type": "application/json"}), timeout=60).read().decode()
-                  print(r.splitlines()[0]); ok = "9065" in r; break
+                  print(r.splitlines()[0]); ok = "9065" in r
+                  pr = json.load(urllib.request.urlopen(urllib.request.Request("http://localhost:8000/api/profiles",
+                      data=b'{"name":"Smoke","age":9,"grade":"4","language":"hi","interests":"space"}',
+                      headers={"Content-Type": "application/json"}), timeout=10))
+                  print("profile added:", pr.get("name")); ok = ok and pr.get("name") == "Smoke"; break
               except Exception as e:
                   last = f"{type(e).__name__}: {e}"
           p.kill()

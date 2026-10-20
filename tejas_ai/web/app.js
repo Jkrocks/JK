@@ -18,10 +18,17 @@ const S = {
 };
 
 /* ---------------------------------------------------------------- API */
+const OFFLINE_MSG = "Tejas isn’t running on the computer right now. Open the Tejas AI app there, wait for “Home server ✓ running”, then try again.";
 async function api(path, opts = {}) {
   const headers = { ...(opts.body && !(opts.body instanceof FormData) ? { "Content-Type": "application/json" } : {}), ...(opts.headers || {}) };
   if (S.parentPin) headers["X-Parent-Pin"] = S.parentPin;
-  const r = await fetch(path, { ...opts, headers, body: opts.body && !(opts.body instanceof FormData) ? JSON.stringify(opts.body) : opts.body });
+  let r;
+  try {
+    r = await fetch(path, { ...opts, headers, body: opts.body && !(opts.body instanceof FormData) ? JSON.stringify(opts.body) : opts.body });
+  } catch (e) {
+    if (e.name === "AbortError") throw e;
+    throw Object.assign(new Error(OFFLINE_MSG), { offline: true });
+  }
   if (r.status === 204) return null;
   const ct = r.headers.get("content-type") || "";
   const data = ct.includes("json") ? await r.json() : await r.blob();
@@ -522,7 +529,12 @@ async function loadStatus() {
       ? `Running on this computer${s.voice ? " with my own voice" : ""}. No internet needed, nothing leaves your home.`
       : `My thinking engine isn’t ready. ${s.llm.error || ""}. On the home computer run: ollama pull ${s.llm.model || "qwen2.5:7b"}`;
     $("#orbName").textContent = s.name || "Tejas";
-  } catch { const pill = $("#brainPill"); pill.className = "status-dot bad"; $("span", pill).textContent = "Home computer unreachable"; }
+    S.wasOffline = false;
+  } catch {
+    const pill = $("#brainPill"); pill.className = "status-dot bad"; $("span", pill).textContent = "Home computer unreachable";
+    if (!S.wasOffline) toast("Tejas isn’t running", OFFLINE_MSG, null, 20000);
+    S.wasOffline = true;
+  }
 }
 /* ---------------------------------------------------------------- Live events (reminders on every screen) */
 function events() {
