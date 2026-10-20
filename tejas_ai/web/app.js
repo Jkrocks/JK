@@ -190,8 +190,8 @@ const voiceOut = (() => {
     try {
       if (serverVoice) {
         const r = await fetch("/api/speak", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ text: s, lang: langOf(s) }) });
-        if (r.status === 200) { await playBlob(await r.blob()); playing = false; return next(); }
-        serverVoice = false; // no voice on the home computer: use this device's own voice from now on
+        if (r.status === 200) { const played = await playBlob(await r.blob()); if (played !== false) { playing = false; return next(); } }
+        else serverVoice = false; // no voice on the home computer: use this device's own voice from now on
       }
       await deviceSay(s, langOf(s));
     } catch (e) { console.warn("speak", e); }
@@ -202,10 +202,11 @@ const voiceOut = (() => {
       const url = URL.createObjectURL(blob);
       player.src = url;
       const ctx = audioCtx();
+      if (ctx && ctx.state === "suspended") ctx.resume().catch(() => {});
       if (ctx && !AC.playSrc) { try { AC.playSrc = ctx.createMediaElementSource(player); AC.playSrc.connect(AC.an); AC.playSrc.connect(ctx.destination); } catch {} }
       if (AC.micSrc) { try { AC.micSrc.disconnect(); } catch {} }
       player.onended = player.onerror = () => { URL.revokeObjectURL(url); res(); };
-      player.play().catch(() => res());
+      player.play().catch(() => { URL.revokeObjectURL(url); res(false); });
     });
   }
   function pickVoice(lang) {
@@ -526,7 +527,8 @@ async function loadStatus() {
     pill.title = s.llm.error || "";
     $("#liveBadge").className = "badge" + (s.llm.ok ? "" : " bad"); $("#liveBadge").textContent = s.llm.ok ? "Active" : "Needs setup";
     $("#statusText").textContent = s.llm.ok
-      ? `Running on this computer${s.voice ? " with my own voice" : ""}. No internet needed, nothing leaves your home.`
+      ? (s.llm.online ? `Thinking with a free online brain${s.voice ? ", talking with my own voice" : ""}. Questions go over the internet.`
+                      : `Running on this computer${s.voice ? " with my own voice" : ""}. No internet needed, nothing leaves your home.`)
       : `My thinking engine isn’t ready. ${s.llm.error || ""}. On the home computer run: ollama pull ${s.llm.model || "qwen2.5:7b"}`;
     $("#orbName").textContent = s.name || "Tejas";
     S.wasOffline = false;
@@ -776,4 +778,14 @@ document.addEventListener("keydown", (e) => {
     history.replaceState(null, "", location.pathname);
   }
   if ("serviceWorker" in navigator && window.isSecureContext) navigator.serviceWorker.register("sw.js").catch(() => {});
+})();
+
+/* Browsers only allow sound after the first tap or key press: unlock it then. */
+(() => {
+  const unlock = () => {
+    try { const c = audioCtx(); if (c && c.state === "suspended") c.resume(); } catch {}
+    try { if ("speechSynthesis" in window) { const u = new SpeechSynthesisUtterance(" "); u.volume = 0; speechSynthesis.speak(u); } } catch {}
+    removeEventListener("pointerdown", unlock, true); removeEventListener("keydown", unlock, true);
+  };
+  addEventListener("pointerdown", unlock, true); addEventListener("keydown", unlock, true);
 })();

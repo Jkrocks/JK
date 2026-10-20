@@ -176,7 +176,7 @@ def full_setup(progress: Progress, model: str | None = None, whisper: str | None
     rec = recommended()
     model, whisper = model or rec["model"], whisper or rec["whisper"]
     cfg = Config()
-    cfg.update({"llm": {"model": model}, "stt": {"model": whisper}})
+    cfg.update({"llm": {"model": model, "backend": "ollama", "url": "http://127.0.0.1:11434"}, "stt": {"model": whisper}})
     if not start_ollama():
         raise RuntimeError("Ollama isn't installed or won't start.")
     if not any(m in (model, f"{model}:latest") for m in ollama_models()):
@@ -185,3 +185,39 @@ def full_setup(progress: Progress, model: str | None = None, whisper: str | None
         download_whisper(whisper, progress)
     if not voices_ready():
         download_voices(list(DEFAULT_VOICES.values()), progress)
+
+
+# Free online brain (Groq) ---------------------------------------------------
+GROQ_URL = "https://api.groq.com/openai"
+GROQ_MODEL = "llama-3.3-70b-versatile"
+GROQ_KEYS_PAGE = "https://console.groq.com/keys"
+
+
+def check_groq_key(key: str) -> str | None:
+    """None if the key works, otherwise a plain-words problem."""
+    import httpx
+    try:
+        r = httpx.get(f"{GROQ_URL}/v1/models", headers={"Authorization": f"Bearer {key.strip()}"}, timeout=10)
+    except Exception:
+        return "Couldn't reach Groq. Check the internet."
+    if r.status_code in (401, 403):
+        return "That key wasn't accepted. Copy it again from console.groq.com/keys."
+    if r.status_code >= 400:
+        return f"Groq said {r.status_code}. Try again in a minute."
+    return None
+
+
+def use_groq(key: str) -> None:
+    cfg = Config()
+    cfg.update({"llm": {"backend": "openai", "url": GROQ_URL, "model": GROQ_MODEL, "api_key": key.strip()},
+                "stt": {"cloud_url": GROQ_URL, "api_key": key.strip()}})
+
+
+def use_offline() -> None:
+    cfg = Config()
+    cfg.update({"llm": {"backend": "ollama", "url": "http://127.0.0.1:11434"}})
+
+
+def online_brain() -> bool:
+    cfg = Config()
+    return cfg.get("llm.backend") != "ollama" and bool(cfg.get("llm.api_key"))

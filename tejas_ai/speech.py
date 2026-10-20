@@ -46,7 +46,32 @@ class Ears:
         self._lock = threading.Lock()
         self.error: str | None = None
 
+    def local_ready(self) -> bool:
+        return (self.models_dir / "whisper" / self.cfg.get("stt.model", "small") / "model.bin").exists()
+
+    def cloud(self) -> bool:
+        """Online ears (e.g. Groq's free Whisper) are used only when the local model isn't downloaded."""
+        return bool(self.cfg.get("stt.cloud_url") and self.cfg.get("stt.api_key")) and not self.local_ready()
+
+    def _cloud_transcribe(self, audio: bytes, language: str | None) -> dict:
+        import httpx
+        ext = ("webm" if audio[:4] == b"\x1a\x45\xdf\xa3" else "ogg" if audio[:4] == b"OggS" else
+               "wav" if audio[:4] == b"RIFF" else "mp4" if audio[4:8] == b"ftyp" else "webm")
+        files = {"file": (f"speech.{ext}", audio, "application/octet-stream")}
+        data = {"model": self.cfg.get("stt.cloud_model", "whisper-large-v3-turbo"), "response_format": "verbose_json",
+                "prompt": "Tejas, homework, maths, reminder, please, thank you."}
+        if language in ("en", "hi", "pa"):
+            data["language"] = language
+        r = httpx.post(self.cfg.get("stt.cloud_url").rstrip("/") + "/v1/audio/transcriptions", files=files, data=data,
+                       headers={"Authorization": f"Bearer {self.cfg.get('stt.api_key').strip()}"}, timeout=60)
+        r.raise_for_status()
+        d = r.json()
+        lang = {"english": "en", "hindi": "hi", "punjabi": "pa"}.get(str(d.get("language", "")).lower(), d.get("language"))
+        return {"text": (d.get("text") or "").strip(), "language": lang}
+
     def available(self) -> bool:
+        if self.cloud():
+            return True
         try:
             import faster_whisper  # noqa: F401
             return True
@@ -71,6 +96,11 @@ class Ears:
     def transcribe(self, audio: bytes, language: str | None = None) -> dict:
         if not audio or len(audio) < 1000:
             return {"text": "", "language": None}
+        if self.cloud():
+            out = self._cloud_transcribe(audio, language)
+            if out["text"].lower().strip(" .!") in {"thank you", "thanks for watching", "you", "bye"} and len(audio) < 40000:
+                out["text"] = ""
+            return out
         with self._lock:
             model = self._load()
             with tempfile.NamedTemporaryFile(suffix=".audio", delete=False) as f:

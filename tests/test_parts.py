@@ -134,3 +134,16 @@ def test_news_parse_rss_and_atom():
     assert parse_feed(rss) == [{"title": "Big & small", "summary": "Hello"}]
     atom = b'<feed xmlns="http://www.w3.org/2005/Atom"><entry><title>A</title><summary>B</summary></entry></feed>'
     assert parse_feed(atom) == [{"title": "A", "summary": "B"}]
+
+
+def test_online_key_hidden_and_live_reload(tmp_path):
+    import json, time
+    from tejas_ai.config import Config
+    a = Config(tmp_path / "config.json")
+    b = Config(tmp_path / "config.json")
+    b.update({"llm": {"backend": "openai", "api_key": "gsk_secret"}})
+    time.sleep(0.01)
+    a._checked = 0.0
+    assert a.get("llm.api_key") == "gsk_secret"          # picks up the desktop window's change
+    assert a.public()["llm"]["api_key"] == "set"          # never sent to screens
+    assert "gsk_secret" not in json.dumps(a.public())

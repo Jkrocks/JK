@@ -305,6 +305,9 @@ def create_app(data_dir: Path | None = None, llm=None) -> FastAPI:
         pins.check(x_parent_pin)
         allowed = {"assistant", "llm", "stt", "tts"}
         clean = {k: v for k, v in patch.items() if k in allowed and isinstance(v, dict)}
+        for sect in ("llm", "stt"):
+            if sect in clean and clean[sect].get("api_key") == "set":
+                clean[sect] = {k: v for k, v in clean[sect].items() if k != "api_key"}
         cfg.update(clean)
         return cfg.public()
 

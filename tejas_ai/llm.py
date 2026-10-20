@@ -35,25 +35,36 @@ class LLM:
     def model(self) -> str:
         return self.cfg.get("llm.model")
 
+    @property
+    def online(self) -> bool:
+        return self.backend != "ollama" and not self.url.startswith(("http://127.", "http://localhost"))
+
+    def _headers(self) -> dict:
+        key = (self.cfg.get("llm.api_key") or "").strip()
+        return {"Authorization": f"Bearer {key}"} if key else {}
+
     def _client(self) -> httpx.AsyncClient:
         t = float(self.cfg.get("llm.timeout_s", 300))
-        return httpx.AsyncClient(timeout=httpx.Timeout(t, connect=5.0))
+        return httpx.AsyncClient(timeout=httpx.Timeout(t, connect=8.0), headers=self._headers())
 
     async def status(self) -> dict:
         try:
-            async with httpx.AsyncClient(timeout=3.0) as c:
+            async with httpx.AsyncClient(timeout=6.0, headers=self._headers()) as c:
                 if self.backend == "ollama":
                     r = await c.get(f"{self.url}/api/tags")
                     r.raise_for_status()
                     names = [m["name"] for m in r.json().get("models", [])]
                 else:
                     r = await c.get(f"{self.url}/v1/models")
+                    if r.status_code in (401, 403):
+                        return {"ok": False, "backend": self.backend, "online": self.online,
+                                "error": "the online brain key was not accepted"}
                     r.raise_for_status()
                     names = [m["id"] for m in r.json().get("data", [])]
         except Exception as e:
             return {"ok": False, "backend": self.backend, "error": f"model server not reachable ({type(e).__name__})"}
         have = self.model in names or f"{self.model}:latest" in names or self.backend != "ollama"
-        return {"ok": have, "backend": self.backend, "model": self.model, "models": names,
+        return {"ok": have, "backend": self.backend, "online": self.online, "model": self.model, "models": names[:50],
                 **({} if have else {"error": f"model '{self.model}' is not downloaded yet"})}
 
     # Message helpers (each backend wants tool turns shaped differently) --
@@ -85,6 +96,8 @@ class LLM:
                 async for ev in self._openai(messages, tools, temp):
                     yield ev
         except (httpx.ConnectError, httpx.ConnectTimeout) as e:
+            if self.online:
+                raise LLMOffline("I can't reach my online brain. Check the internet and try again.") from e
             raise LLMOffline("The thinking engine isn't running on this computer. Start Ollama and try again.") from e
 
     async def _ollama(self, messages, tools, temp):
@@ -138,6 +151,10 @@ class LLM:
                     err = (await r.aread()).decode("utf-8", "ignore")
                     if tools and "tool" in err.lower():
                         raise ToolsUnsupported(err)
+                    if r.status_code in (401, 403):
+                        raise LLMOffline("My online brain key isn't working. Paste a new free key in the Tejas window.")
+                    if r.status_code == 429:
+                        raise LLMOffline("I've used up my free online thinking for a moment. Try again in a minute.")
                     raise RuntimeError(f"model error {r.status_code}: {err[:200]}")
                 async for line in r.aiter_lines():
                     if not line.startswith("data:"):

@@ -10,6 +10,7 @@ Everything lives in one folder (default ~/.tejas-ai, override with TEJAS_AI_HOME
 from __future__ import annotations
 
 import copy
+import time
 import json
 import os
 import threading
@@ -32,6 +33,8 @@ DEFAULTS: dict = {
         "temperature": 0.6,
         "num_ctx": 8192,
         "timeout_s": 300,
+        # Only for an online brain (e.g. Groq's free tier). Empty = fully offline.
+        "api_key": "",
     },
     "stt": {
         # faster-whisper size: tiny, base, small, medium, large-v3.
@@ -39,6 +42,10 @@ DEFAULTS: dict = {
         "model": "small",
         "device": "auto",
         "compute_type": "int8",
+        # Optional online ears (OpenAI-compatible /audio/transcriptions, e.g. Groq).
+        "cloud_url": "",
+        "api_key": "",
+        "cloud_model": "whisper-large-v3-turbo",
     },
     "tts": {
         "enabled": True,
@@ -86,6 +93,7 @@ class Config:
     def __init__(self, path: Path | None = None):
         self.path = path or home() / "config.json"
         self._lock = threading.Lock()
+        self._checked, self._mtime = 0.0, None
         data = {}
         if self.path.exists():
             try:
@@ -96,7 +104,25 @@ class Config:
         self.data = _merge(DEFAULTS, data)
         self.save()
 
+    def _fresh(self) -> None:
+        """Pick up changes another part of Tejas (the desktop window) wrote to config.json."""
+        now = time.monotonic()
+        if now - self._checked < 1.0:
+            return
+        self._checked = now
+        try:
+            m = self.path.stat().st_mtime
+        except OSError:
+            return
+        if m != self._mtime:
+            try:
+                self.data = _merge(DEFAULTS, json.loads(self.path.read_text("utf-8")))
+                self._mtime = m
+            except (json.JSONDecodeError, OSError):
+                pass
+
     def get(self, dotted: str, default=None):
+        self._fresh()
         node = self.data
         for part in dotted.split("."):
             if not isinstance(node, dict) or part not in node:
@@ -106,6 +132,8 @@ class Config:
 
     def update(self, patch: dict) -> None:
         with self._lock:
+            self._checked = 0.0
+            self._fresh()
             self.data = _merge(self.data, patch)
             self.save()
 
@@ -113,10 +141,17 @@ class Config:
         tmp = self.path.with_suffix(".tmp")
         tmp.write_text(json.dumps(self.data, indent=2), "utf-8")
         tmp.replace(self.path)
+        try:
+            self._mtime = self.path.stat().st_mtime
+        except OSError:
+            pass
 
     def public(self) -> dict:
         """Settings safe to show in the app (no PIN hash)."""
         d = copy.deepcopy(self.data)
         d.pop("parent", None)
+        for sect in ("llm", "stt"):  # never send keys to the screens
+            if isinstance(d.get(sect), dict) and d[sect].get("api_key"):
+                d[sect]["api_key"] = "set"
         d["parent_pin_set"] = bool(self.data["parent"].get("pin_hash"))
         return d

@@ -116,8 +116,8 @@ def run_gui(root) -> None:
 
     root.title("Tejas AI")
     root.configure(bg=BG)
-    root.geometry("620x700")
-    root.minsize(580, 640)
+    root.geometry("720x720")
+    root.minsize(700, 660)
     icon = Path(__file__).parent / "web" / "icons" / "icon-192.png"
     try:
         root.iconphoto(True, tk.PhotoImage(file=str(icon)))
@@ -172,6 +172,41 @@ def run_gui(root) -> None:
     quit_btn = button(btns, "Quit Tejas", lambda: quit_all())
     quit_btn.pack(side="right")
 
+    online = tk.Frame(root, bg=BG)
+    online.pack(fill="x", padx=24, pady=(10, 0))
+    online_lbl = label(online, "", 10, DIM, wraplength=540)
+    online_lbl.pack(fill="x")
+    obtns = tk.Frame(online, bg=BG)
+    obtns.pack(fill="x", pady=(6, 0))
+    key_link = button(obtns, "Get a free key", lambda: webbrowser.open(setup.GROQ_KEYS_PAGE))
+    key_link.pack(side="left")
+    key_btn = button(obtns, "Paste key", lambda: ask_key(), primary=True)
+    key_btn.pack(side="left", padx=8)
+    off_btn = button(obtns, "Go fully offline", lambda: go_offline())
+
+    def ask_key():
+        from tkinter import simpledialog
+        key = simpledialog.askstring("Free online brain",
+                                     "Paste your Groq key (it starts with gsk_):", parent=root, show="•")
+        if not key or not key.strip():
+            return
+        msg.config(text="Checking the key…")
+
+        def work():
+            problem = setup.check_groq_key(key)
+            if problem:
+                root.after(0, lambda: msg.config(text=problem))
+                return
+            setup.use_groq(key)
+            log("online brain switched on")
+            root.after(0, lambda: (msg.config(text="Online brain is on. Open Tejas and say hi!"), refresh_once()))
+        threading.Thread(target=work, daemon=True).start()
+
+    def go_offline():
+        setup.use_offline()
+        msg.config(text="Fully offline: Tejas now thinks with Ollama on this computer.")
+        refresh_once()
+
     phone = tk.Frame(root, bg=BG)
     phone.pack(fill="x", padx=24, pady=(14, 0))
     qr_label = tk.Label(phone, bg=BG, bd=0)
@@ -195,6 +230,25 @@ def run_gui(root) -> None:
             msg.config(text=server.error)
         else:
             mark("server", server.ready.is_set() or None, "running" if server.ready.is_set() else "starting")
+        if setup.online_brain():
+            mark("engine", True, "Groq (online, free)")
+            mark("brain", True, cfg.get("llm.model"))
+            local_ears = setup.whisper_ready(whisper)
+            mark("ears", True, f"Whisper {whisper}" if local_ears else "Groq Whisper (online)")
+            mark("voice", True if setup.voices_ready() else None, "ready" if setup.voices_ready() else "using device voice")
+            ollama_btn.pack_forget()
+            setup_btn.config(state="disabled" if state["busy"] or not setup.ollama_installed() else "normal")
+            online_lbl.config(text="Using the free online brain. Questions go to Groq over the internet.")
+            key_btn.config(text="Change key")
+            if not off_btn.winfo_ismapped():
+                off_btn.pack(side="left")
+            if not state["busy"] and (not msg.cget("text") or msg.cget("text").startswith("Step")):
+                msg.config(text="Ready. Open Tejas and say hi!")
+            phone_and_repeat()
+            return
+        online_lbl.config(text="No Ollama yet, or want it faster? Use a free online brain: get a free Groq key, then paste it.")
+        key_btn.config(text="Paste key")
+        off_btn.pack_forget()
         installed = setup.ollama_installed()
         running = setup.ollama_running() or (installed and setup.start_ollama())
         mark("engine", running, "running" if running else ("installed, not running" if installed else "not installed"))
@@ -208,13 +262,20 @@ def run_gui(root) -> None:
         elif not ollama_btn.winfo_ismapped():
             ollama_btn.pack(side="left", before=open_btn, padx=(0, 8))
             if not state["busy"]:
-                msg.config(text="Step 1: install Ollama (the free engine Tejas thinks with), then come back here.")
+                msg.config(text="Quickest start: get a free key and paste it below. Or, for fully offline: install Ollama (step 1).")
         ready_all = has_model and setup.whisper_ready(whisper) and setup.voices_ready()
         setup_btn.config(state="disabled" if (state["busy"] or ready_all or not installed) else "normal")
         if ready_all and not state["busy"]:
             msg.config(text="Everything is ready. Tejas works with no internet.")
         elif installed and not state["busy"] and not has_model:
             msg.config(text=f"Step 2: download the brain ({model}), ears and voice. Needs internet once (~5 GB).")
+        phone_and_repeat()
+
+    def refresh_once():
+        state["once"] = True
+        refresh()
+
+    def phone_and_repeat():
         if server.urls["lan"]:
             ca = home() / "certs" / "tejas-home-ca.crt"
             code = f"\nPairing code for the phone and TV apps:  {certs.ca_fingerprint(ca)}" if ca.exists() else ""
@@ -232,6 +293,8 @@ def run_gui(root) -> None:
                     qr_state["url"] = url
                 except Exception as e:
                     log(f"QR code failed: {e}")
+        if state.pop("once", False):
+            return
         if not state["busy"]:
             root.after(4000, refresh)
 
