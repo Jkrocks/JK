@@ -268,3 +268,7 @@ body[data-state=speaking] .card.voice{background:radial-gradient(90% 120% at 15%
   .toasts{left:50%;bottom:150px}
 }
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+
+/* Voice typing (web app) */
+body.dictating .ask{box-shadow:0 0 0 2px var(--mint,#74f0c9),0 0 32px rgba(116,240,201,.35)}
+body.dictating #askInput::placeholder{color:var(--mint,#74f0c9);opacity:1}

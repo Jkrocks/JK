@@ -311,7 +311,7 @@ let rec = null;
 async function listen() {
   if (rec) { rec.stopNow(); return; }
   voiceOut.stop();
-  if (window.TEJAS_WEB) return listenWeb();
+  if (window.TEJAS_WEB) { if (DICT.on) return stopDictation(); return listenWeb(); }
   if (!window.isSecureContext || !navigator.mediaDevices) {
     toast("Microphone needs the secure address", "Open Tejas with the https:// address shown in Connect, then allow the microphone.", { label: "Show me", fn: openConnect });
     return;
@@ -367,12 +367,10 @@ async function listen() {
 function listenWeb() {
   const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
   const dictate = () => {
-    const box = $("#askInput"); box.focus();
-    toast("Talk with your keyboard", /Android|iPhone|iPad/i.test(navigator.userAgent)
-      ? "Tap the microphone on your keyboard, speak, then tap send. I’ll answer out loud."
-      : "Press Windows key + H (on a Mac, press Fn twice), speak, then press Enter. I’ll answer out loud.", null, 12000);
+    window.TEJAS_WEB_NO_SR = true; store.set("noSR", true);
+    startDictation();
   };
-  if (!SR || window.TEJAS_WEB_NO_SR) return dictate();
+  if (!SR || window.TEJAS_WEB_NO_SR || store.get("noSR", false)) return dictate();
   const r = new SR();
   const lang = S.who && S.who.language;
   r.lang = lang === "hi" ? "hi-IN" : lang === "pa" ? "pa-IN" : "en-IN";
@@ -385,19 +383,64 @@ function listenWeb() {
     }
     $("#capYou").textContent = (finalText + " " + interim).trim() || "…";
   };
-  r.onerror = (e) => { failed = e.error; };
+  r.onerror = (e) => { failed = e.error || "error"; };
   r.onend = () => {
     rec = null;
     if (finalText.trim()) return ask(finalText.trim());
     setState("idle");
-    if (failed === "not-allowed" || failed === "service-not-allowed" || failed === "network" || failed === "audio-capture") {
-      window.TEJAS_WEB_NO_SR = true; dictate();
+    if (failed && failed !== "no-speech" && failed !== "aborted") {
+      dictate();
     } else if (S.hands) { S.hands = false; syncToggles(); toast("Hands-free paused", "I didn’t hear anything, so I stopped listening."); }
   };
   rec = { stopNow: () => { try { r.stop(); } catch {} } };
   setState("listening"); $("#capYou").textContent = "…";
   try { r.start(); } catch { rec = null; setState("idle"); window.TEJAS_WEB_NO_SR = true; dictate(); }
 }
+
+/* Talking through the computer's own voice typing (Windows + H, Mac Fn Fn, phone keyboard mic).
+   Tejas sends the question by itself when you stop talking. */
+const DICT = { on: false, t: null, last: "" };
+const isPhone = /Android|iPhone|iPad/i.test(navigator.userAgent);
+const isMac = /Mac/i.test(navigator.platform || navigator.userAgent) && !isPhone;
+function dictHint() {
+  return isPhone ? "Tap the mic on your keyboard and talk" : isMac ? "Press Fn twice, then talk" : "Press Windows + H, then talk";
+}
+function startDictation() {
+  const box = $("#askInput");
+  DICT.on = true; DICT.last = box.value;
+  box.value = ""; box.placeholder = dictHint() + "…";
+  document.body.classList.add("dictating");
+  setState("listening"); $("#capYou").textContent = "…";
+  box.focus();
+  if (!store.get("dictTipSeen", false)) {
+    toast("Talk to Tejas", (isPhone ? "Tap the microphone on your keyboard and speak."
+      : isMac ? "Press the Fn key twice (or turn on Dictation in Settings), then speak."
+      : "Press the Windows key and H together, then speak. Windows types what you say.")
+      + " When you stop talking, I send it by myself and answer out loud.", null, 15000);
+    store.set("dictTipSeen", true);
+  }
+  clearTimeout(DICT.t);
+  DICT.t = setTimeout(() => { if (DICT.on && !box.value.trim()) stopDictation(); }, 45000);
+}
+function stopDictation() {
+  DICT.on = false; clearTimeout(DICT.t);
+  document.body.classList.remove("dictating");
+  $("#askInput").placeholder = "Ask a question…";
+  if (S.state === "listening") { setState("idle"); $("#capYou").textContent = ""; }
+}
+$("#askInput").addEventListener("input", () => {
+  if (!DICT.on) return;
+  const v = $("#askInput").value;
+  $("#capYou").textContent = v || "…";
+  clearTimeout(DICT.t);
+  // Voice typing pauses when you stop talking: send after a short quiet moment.
+  DICT.t = setTimeout(() => {
+    const q = $("#askInput").value.trim();
+    if (!DICT.on || !q) return;
+    $("#askInput").value = ""; stopDictation(); ask(q);
+  }, 1800);
+});
+$("#askInput").addEventListener("keydown", (e) => { if (DICT.on && e.key === "Escape") stopDictation(); });
 
 /* ---------------------------------------------------------------- Timers */
 function addTimer(seconds, label) {
@@ -765,7 +808,7 @@ $("#btnAddTimer").onclick = () => miniForm("New timer",
 /* ---------------------------------------------------------------- Controls */
 $("#mic").onclick = () => { audioCtx(); if (S.state === "speaking") { voiceOut.stop(); return; } if (S.state === "thinking" || S.state === "checking") return; listen(); };
 $("#stop").onclick = () => { voiceOut.stop(); if (S.abort) S.abort.abort(); setState("idle"); };
-$("#askForm").onsubmit = (e) => { e.preventDefault(); audioCtx(); const v = $("#askInput").value; $("#askInput").value = ""; ask(v); };
+$("#askForm").onsubmit = (e) => { e.preventDefault(); audioCtx(); if (DICT.on) stopDictation(); const v = $("#askInput").value; $("#askInput").value = ""; ask(v); };
 function syncToggles() { $("#togDeep").setAttribute("aria-pressed", S.deep); $("#togHands").setAttribute("aria-pressed", S.hands); }
 $("#togDeep").onclick = () => { S.deep = !S.deep; store.set("deep", S.deep); syncToggles(); };
 $("#togHands").onclick = () => { S.hands = !S.hands; syncToggles(); if (S.hands && S.state === "idle") { audioCtx(); listen(); } };
