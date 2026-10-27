@@ -1,0 +1,37 @@
+#!/bin/sh
+# TEJAS Lite: make the ISO fit in one download under 2 GB.
+# Removes extra font sets, unused translations, manuals and build tools.
+# Everything removed can be added back later from the app store / Get more apps.
+[ "$(cat /etc/tejas-edition 2>/dev/null)" = "lite" ] || exit 0
+set -x
+
+# Packages pulled in as "recommended" that a family desktop doesn't need.
+for p in fonts-noto-extra fonts-noto-cjk-extra fonts-noto-ui-extra \
+         gcc-14 g++-14 gcc g++ build-essential \
+         cryfs plasma-vault git git-man vlc-l10n pocketsphinx-en-us \
+         libreoffice-help-en-us mythes-en-us hunspell-en-us-large; do
+	dpkg -s "$p" >/dev/null 2>&1 && DEBIAN_FRONTEND=noninteractive apt-get purge -y "$p" || true
+done
+
+# Translations: keep English and Indian languages.
+KEEP='^(en|en_GB|en_IN|en_US|hi|pa|mr|gu|bn|ta|te|kn|ml|or|as|ur|ne|sa)$'
+for d in /usr/share/locale/*/; do
+	n=$(basename "$d")
+	echo "$n" | grep -Eq "$KEEP" || rm -rf "$d"
+done
+for d in /usr/share/qt6/translations /usr/share/libreoffice/translations; do
+	[ -d "$d" ] && find "$d" -type f ! -name '*_en*' ! -name '*_hi*' -delete || true
+done
+
+# Manuals and docs (keep copyright files).
+find /usr/share/doc -type f ! -name copyright -delete 2>/dev/null || true
+rm -rf /usr/share/man/* /usr/share/info/* /usr/share/help/[!C]* /usr/share/gtk-doc 2>/dev/null || true
+
+# Stop them coming back with future updates of these paths.
+cat > /etc/dpkg/dpkg.cfg.d/01-tejas-lite <<'CFG'
+path-exclude=/usr/share/man/*
+path-exclude=/usr/share/info/*
+path-exclude=/usr/share/doc/*
+path-include=/usr/share/doc/*/copyright
+CFG
+apt-get clean
