@@ -1,0 +1,7 @@
+[Desktop Entry]
+Type=Application
+Name=Get more apps
+Comment=Add GIMP, Krita, Kdenlive, games and more with one click
+Exec=tejas-get-apps
+Icon=plasmadiscover
+Categories=System;Settings;

@@ -1,0 +1,21 @@
+#!/bin/sh
+# TEJAS: "Get more apps" - one click to add the big free apps (needs internet once).
+TITLE="Get more apps"
+CHOICE=$(kdialog --title "$TITLE" --separate-output --checklist "Pick the free apps you want. TEJAS downloads and installs them for you." \
+	gimp "GIMP - photo editing" on \
+	krita "Krita - drawing and painting" on \
+	inkscape "Inkscape - logos and vector art" on \
+	kdenlive "Kdenlive - video editing" on \
+	obs-studio "OBS Studio - screen recording" off \
+	blender "Blender - 3D" off \
+	libreoffice "LibreOffice (all parts)" off \
+	thunderbird "Thunderbird - email" off \
+	supertuxkart "SuperTuxKart - racing game" on \
+	wine "Wine - run some Windows apps" off) || exit 0
+[ -z "$CHOICE" ] && exit 0
+PKGS=$(echo "$CHOICE" | tr '\n' ' ')
+if ! ping -c1 -W3 deb.debian.org >/dev/null 2>&1; then
+	kdialog --title "$TITLE" --sorry "Connect to the internet (Wi-Fi icon, bottom right), then try again."
+	exit 1
+fi
+konsole --hide-menubar -p tabtitle="Installing apps" -e sh -c "echo 'Installing: $PKGS'; echo; pkexec sh -c 'apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y $PKGS' && echo && echo 'All done! Find your new apps in the Start menu.' || echo 'Something went wrong. Check the internet and try again.'; echo; read -p 'Press Enter to close' x"

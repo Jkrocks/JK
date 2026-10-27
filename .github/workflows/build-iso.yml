@@ -2,6 +2,10 @@ name: Build TEJAS ISO
 
 on:
   workflow_dispatch:
+    inputs:
+      edition:
+        description: "full (5 GB, every app) or lite (one file under 2 GB)"
+        default: lite
   push:
     branches: [main, tejas-os]
     paths-ignore:
@@ -11,6 +15,12 @@ on:
 concurrency:
   group: build-iso
   cancel-in-progress: true
+
+permissions:
+  contents: write
+
+env:
+  EDITION: ${{ inputs.edition || 'lite' }}
 
 jobs:
   build:
@@ -28,7 +38,7 @@ jobs:
       - name: Build the ISO inside Debian 13
         run: |
           docker run --rm --privileged \
-            -v "$PWD":/build -w /build \
+            -e EDITION="$EDITION" -v "$PWD":/build -w /build \
             debian:trixie \
             bash -c "chmod +x build.sh auto/* config/hooks/live/*.hook.chroot config/includes.chroot/usr/bin/* && ./build.sh"
 
@@ -39,7 +49,7 @@ jobs:
       - name: Upload the ISO
         uses: actions/upload-artifact@v4
         with:
-          name: tejas-1.0-amd64
+          name: tejas-1.0-${{ env.EDITION }}-amd64
           path: |
             out/*.iso
             out/*.sha256
@@ -53,3 +63,22 @@ jobs:
           name: build-log
           path: build.log
           retention-days: 14
+
+      - name: Publish one-file download (when it fits GitHub's 2 GB limit)
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          ISO=$(ls out/*.iso | head -1)
+          SIZE=$(stat -c %s "$ISO")
+          echo "ISO size: $SIZE bytes ($(du -h "$ISO" | cut -f1))"
+          if [ "$SIZE" -ge 2147000000 ]; then
+            echo "::warning title=Too big for one file::$(basename "$ISO") is $(du -h "$ISO" | cut -f1); GitHub allows under 2 GB per file. Use publish-iso.yml to split it."
+            exit 0
+          fi
+          TAG=tejas-os-v1.0
+          gh release view "$TAG" -R "$GITHUB_REPOSITORY" >/dev/null 2>&1 || \
+            gh release create "$TAG" -R "$GITHUB_REPOSITORY" --target tejas-os --title "TEJAS OS 1.0" --notes "TEJAS OS 1.0" --latest=false
+          for f in "$ISO" "$ISO.sha256"; do
+            for i in 1 2 3; do gh release upload "$TAG" "$f" -R "$GITHUB_REPOSITORY" --clobber && break || sleep 20; done
+          done
+          echo "::notice title=One-file download::https://github.com/$GITHUB_REPOSITORY/releases/download/$TAG/$(basename "$ISO")"

@@ -17,3 +17,4 @@ config/common
 config/source
 config/package-lists/tejas.list.chroot
 branding/out/
+config/includes.chroot/etc/tejas-edition

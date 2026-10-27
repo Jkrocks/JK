@@ -4,6 +4,12 @@ set -e
 
 flatpak remote-add --if-not-exists --system flathub https://dl.flathub.org/repo/flathub.flatpakrepo
 
+# The Lite edition keeps the download small: Bridge installs Bottles on first use.
+if [ "$(cat /etc/tejas-edition 2>/dev/null)" = "lite" ]; then
+	update-desktop-database -q /usr/share/applications || true
+	exit 0
+fi
+
 # Preinstalling Bottles makes the ISO bigger but means Bridge works offline on day one.
 # If it fails (no network in the build), Bridge offers a one-click install instead.
 flatpak install --system --noninteractive -y flathub com.usebottles.bottles \

@@ -7,7 +7,12 @@ set -euo pipefail
 cd "$(dirname "$0")"
 
 VERSION="1.0"
-OUT="out/tejas-${VERSION}-amd64.iso"
+EDITION="${EDITION:-full}"   # full | lite (lite fits in one file under 2 GB)
+if [ "$EDITION" = "lite" ]; then
+	OUT="out/tejas-${VERSION}-lite-amd64.iso"; PKGS=packages-lite.list
+else
+	OUT="out/tejas-${VERSION}-amd64.iso"; PKGS=packages.list
+fi
 
 if [ "$(id -u)" -ne 0 ]; then
 	echo "Run as root: sudo ./build.sh" >&2
@@ -36,15 +41,17 @@ while read -r pkg; do
 	else
 		missing+=("$pkg")
 	fi
-done < packages.list
+done < "$PKGS"
 if [ "${#missing[@]}" -gt 0 ]; then
 	echo "!! Skipping packages not found in Debian 13: ${missing[*]}"
 fi
 echo "   $(wc -l < config/package-lists/tejas.list.chroot) packages will be installed"
 
-echo "==> Building (this takes 30-60 minutes)"
+echo "$EDITION" > config/includes.chroot/etc/tejas-edition
+
+echo "==> Building the $EDITION edition (this takes 30-60 minutes)"
 lb clean --purge >/dev/null 2>&1 || true
-lb config
+if [ "$EDITION" = "lite" ]; then lb config --firmware-binary false; else lb config; fi
 lb build 2>&1 | tee build.log
 
 iso="$(ls -1 ./*.hybrid.iso 2>/dev/null | head -n1 || true)"
