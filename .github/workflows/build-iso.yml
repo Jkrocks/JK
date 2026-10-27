@@ -71,6 +71,7 @@ jobs:
           ISO=$(ls out/*.iso | head -1)
           SIZE=$(stat -c %s "$ISO")
           echo "ISO size: $SIZE bytes ($(du -h "$ISO" | cut -f1))"
+          [ -f out/biggest-packages.txt ] && echo "::notice title=Biggest packages ($(du -h "$ISO" | cut -f1) ISO)::$(head -30 out/biggest-packages.txt | sed 's/  */ /g' | tr '\n' ';')"
           if [ "$SIZE" -ge 2147000000 ]; then
             echo "::warning title=Too big for one file::$(basename "$ISO") is $(du -h "$ISO" | cut -f1); GitHub allows under 2 GB per file. Use publish-iso.yml to split it."
             exit 0

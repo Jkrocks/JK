@@ -52,8 +52,6 @@ calamares
 calamares-settings-debian
 
 ## Hardware: firmware and drivers for real PCs
-firmware-linux
-firmware-linux-nonfree
 firmware-misc-nonfree
 firmware-iwlwifi
 firmware-realtek

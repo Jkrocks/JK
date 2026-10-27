@@ -51,7 +51,12 @@ echo "$EDITION" > config/includes.chroot/etc/tejas-edition
 
 echo "==> Building the $EDITION edition (this takes 30-60 minutes)"
 lb clean --purge >/dev/null 2>&1 || true
-if [ "$EDITION" = "lite" ]; then lb config --firmware-binary false; else lb config; fi
+if [ "$EDITION" = "lite" ]; then
+	# Only the firmware in the package list (common Wi-Fi, sound, Intel/AMD graphics), not every firmware package.
+	lb config --firmware-binary false --firmware-chroot false
+else
+	lb config
+fi
 lb build 2>&1 | tee build.log
 
 iso="$(ls -1 ./*.hybrid.iso 2>/dev/null | head -n1 || true)"
@@ -62,4 +67,6 @@ fi
 mkdir -p out
 mv "$iso" "$OUT"
 ( cd out && sha256sum "$(basename "$OUT")" > "$(basename "$OUT").sha256" )
+echo "==> Biggest packages inside:"
+chroot chroot dpkg-query -Wf '${Installed-Size}\t${Package}\n' 2>/dev/null | sort -rn | head -40 | awk '{printf "   %6d MB  %s\n", $1/1024, $2}' | tee out/biggest-packages.txt || true
 echo "==> Done: $OUT ($(du -h "$OUT" | cut -f1))"
