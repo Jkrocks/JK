@@ -50,3 +50,12 @@ for f in /usr/share/applications/install-debian.desktop /usr/share/applications/
 		-e 's/^Icon=.*/Icon=tejas-logo/' \
 		"$f"
 done
+
+# Language & region step: start on India (Asia/Kolkata), no internet lookup needed.
+# The list still offers every language: Hindi, Punjabi, Marathi, Tamil and the rest.
+L=/etc/calamares/modules/locale.conf
+if [ -f "$L" ] || [ -d /etc/calamares/modules ]; then
+	touch "$L"
+	sed -i -E '/^geoip:/,/^[^ ]/{/^ /d}' "$L"; sed -i -E '/^(region|zone|geoip|geoipStyle|geoipUrl|geoipSelector):/d' "$L"
+	printf 'region: "Asia"\nzone: "Kolkata"\n' >> "$L"
+fi

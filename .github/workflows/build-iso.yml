@@ -13,7 +13,7 @@ on:
       - "docs/**"
 
 concurrency:
-  group: build-iso
+  group: build-iso-${{ inputs.edition || 'lite' }}
   cancel-in-progress: true
 
 permissions:
@@ -64,22 +64,12 @@ jobs:
           path: build.log
           retention-days: 14
 
-      - name: Publish one-file download (when it fits GitHub's 2 GB limit)
+      - name: Publish to the public download page
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           ISO=$(ls out/*.iso | head -1)
-          SIZE=$(stat -c %s "$ISO")
-          echo "ISO size: $SIZE bytes ($(du -h "$ISO" | cut -f1))"
           [ -f out/biggest-packages.txt ] && echo "::notice title=Biggest packages ($(du -h "$ISO" | cut -f1) ISO)::$(head -30 out/biggest-packages.txt | sed 's/  */ /g' | tr '\n' ';')"
-          if [ "$SIZE" -ge 2147000000 ]; then
-            echo "::warning title=Too big for one file::$(basename "$ISO") is $(du -h "$ISO" | cut -f1); GitHub allows under 2 GB per file. Use publish-iso.yml to split it."
-            exit 0
-          fi
-          TAG=tejas-os-v1.0
-          gh release view "$TAG" -R "$GITHUB_REPOSITORY" >/dev/null 2>&1 || \
-            gh release create "$TAG" -R "$GITHUB_REPOSITORY" --target tejas-os --title "TEJAS OS 1.0" --notes "TEJAS OS 1.0" --latest=false
-          for f in "$ISO" "$ISO.sha256"; do
-            for i in 1 2 3; do gh release upload "$TAG" "$f" -R "$GITHUB_REPOSITORY" --clobber && break || sleep 20; done
-          done
-          echo "::notice title=One-file download::https://github.com/$GITHUB_REPOSITORY/releases/download/$TAG/$(basename "$ISO")"
+          sudo rm -rf chroot binary cache .build   # room to cut the full edition into pieces
+          sudo chown -R "$(id -u)" out
+          bash .github/publish.sh "$ISO"

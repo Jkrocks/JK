@@ -91,3 +91,36 @@ curl
 wget
 unzip
 git
+
+## Indian languages: Hindi, Punjabi, Marathi, Gujarati, Bengali, Tamil, Telugu,
+## Kannada, Malayalam, Odia, Assamese, Urdu (pick one when installing, or later in
+## System Settings > Region & Language; type them with Ctrl+Space)
+fcitx5
+fcitx5-m17n
+fcitx5-frontend-qt6
+fcitx5-frontend-gtk3
+fcitx5-frontend-gtk4
+kde-config-fcitx5
+m17n-db
+fonts-noto-core
+fonts-indic
+libreoffice-l10n-in
+libreoffice-l10n-hi
+hunspell-hi
+hunspell-gu
+hunspell-bn
+hunspell-ml
+hunspell-te
+hyphen-hi
+firefox-esr-l10n-hi-in
+firefox-esr-l10n-pa-in
+firefox-esr-l10n-mr
+firefox-esr-l10n-gu-in
+firefox-esr-l10n-bn
+firefox-esr-l10n-ta
+firefox-esr-l10n-te
+firefox-esr-l10n-kn
+firefox-esr-l10n-ml
+firefox-esr-l10n-or
+firefox-esr-l10n-as
+firefox-esr-l10n-ur
