@@ -36,7 +36,8 @@ missing=()
 while read -r pkg; do
 	pkg="${pkg%%#*}"; pkg="$(echo "$pkg" | xargs)"
 	[ -z "$pkg" ] && continue
-	if apt-cache show "$pkg" >/dev/null 2>&1; then
+	cand="$(apt-cache policy "$pkg" 2>/dev/null | awk '/Candidate:/{print $2; exit}')"
+	if [ -n "$cand" ] && [ "$cand" != "(none)" ]; then
 		echo "$pkg" >> config/package-lists/tejas.list.chroot
 	else
 		missing+=("$pkg")
