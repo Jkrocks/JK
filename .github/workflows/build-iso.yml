@@ -40,11 +40,25 @@ jobs:
           docker run --rm --privileged \
             -e EDITION="$EDITION" -v "$PWD":/build -w /build \
             debian:trixie \
-            bash -c "chmod +x build.sh auto/* config/hooks/live/*.hook.chroot config/includes.chroot/usr/bin/* && ./build.sh"
+            bash -c "chmod +x build.sh auto/* config/hooks/live/*.hook.chroot config/includes.chroot/usr/bin/* && ./build.sh" 2>&1 | tee step.log
+          rc=${PIPESTATUS[0]}
+          if [ $rc -ne 0 ]; then
+            msg=$(tail -n 40 step.log | sed 's/%/%25/g' | tr '\n' '\r' | sed 's/\r/%0A/g')
+            echo "::error title=Build stopped (exit $rc)::$msg"
+            exit $rc
+          fi
 
       - name: Show the end of the build log
         if: always()
         run: sudo tail -n 120 build.log || true
+
+      - name: Explain a failure (readable in the run summary)
+        if: failure()
+        run: |
+          for f in build.log; do [ -f "$f" ] || continue
+            msg=$(sudo tail -n 40 "$f" | sed 's/%/%25/g' | tr '\n' '\r' | sed 's/\r/%0A/g')
+            echo "::error title=Last lines of $f::$msg"
+          done
 
       - name: Upload the ISO
         uses: actions/upload-artifact@v4
