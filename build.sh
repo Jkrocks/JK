@@ -67,6 +67,9 @@ if [ -z "$iso" ]; then
 fi
 mkdir -p out
 mv "$iso" "$OUT"
+# Exact package list (for licences and source lookups on snapshot.debian.org)
+pk="$(ls -1 ./*.packages 2>/dev/null | head -n1 || true)"
+[ -n "$pk" ] && cp "$pk" "${OUT%.iso}.packages"
 ( cd out && sha256sum "$(basename "$OUT")" > "$(basename "$OUT").sha256" )
 echo "==> Biggest packages inside:"
 chroot chroot dpkg-query -Wf '${Installed-Size}\t${Package}\n' 2>/dev/null | sort -rn | head -40 | awk '{printf "   %6d MB  %s\n", $1/1024, $2}' | tee out/biggest-packages.txt || true

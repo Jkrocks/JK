@@ -1,0 +1,28 @@
+#!/bin/sh
+# TEJAS security defaults: firewall on (nothing can connect in), security updates
+# install by themselves, and the live/installed system never has a blank root login.
+set -e
+
+# Firewall: block incoming connections, allow outgoing. Turned on at every boot.
+if [ -f /etc/ufw/ufw.conf ]; then
+	sed -i 's/^ENABLED=.*/ENABLED=yes/' /etc/ufw/ufw.conf
+	sed -i 's/^DEFAULT_INPUT_POLICY=.*/DEFAULT_INPUT_POLICY="DROP"/; s/^DEFAULT_OUTPUT_POLICY=.*/DEFAULT_OUTPUT_POLICY="ACCEPT"/' /etc/default/ufw
+	systemctl enable ufw.service 2>/dev/null || true
+	# Tejas AI's encrypted port, home network only, so phones and the TV can reach it.
+	mkdir -p /etc/ufw/applications.d
+	printf '[Tejas AI]\ntitle=Tejas AI home assistant\ndescription=Encrypted port for phones and TV on the home Wi-Fi\nports=8443/tcp\n' > /etc/ufw/applications.d/tejas-ai
+fi
+
+# Security updates install automatically every day.
+cat > /etc/apt/apt.conf.d/20auto-upgrades <<'CFG'
+APT::Periodic::Update-Package-Lists "1";
+APT::Periodic::Unattended-Upgrade "1";
+APT::Periodic::AutocleanInterval "7";
+CFG
+
+# Lock the root account (the installer sets up a normal user with sudo).
+passwd -l root >/dev/null 2>&1 || true
+
+# Hide other users' home folders.
+sed -i 's/^#\?DIR_MODE=.*/DIR_MODE=0750/' /etc/adduser.conf 2>/dev/null || true
+grep -q '^HOME_MODE' /etc/login.defs && sed -i 's/^HOME_MODE.*/HOME_MODE\t0750/' /etc/login.defs || echo 'HOME_MODE	0750' >> /etc/login.defs

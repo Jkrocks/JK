@@ -18,6 +18,8 @@ concurrency:
 
 permissions:
   contents: write
+  id-token: write      # signs the build-provenance attestation
+  attestations: write
 
 env:
   EDITION: ${{ inputs.edition || 'lite' }}
@@ -78,6 +80,11 @@ jobs:
           path: build.log
           retention-days: 14
 
+      - name: Sign build provenance (lets anyone verify the ISO came from this recipe)
+        uses: actions/attest-build-provenance@v2
+        with:
+          subject-path: out/*.iso
+
       - name: Publish to the public download page
         env:
           GH_TOKEN: ${{ github.token }}
@@ -86,4 +93,5 @@ jobs:
           [ -f out/biggest-packages.txt ] && echo "::notice title=Biggest packages ($(du -h "$ISO" | cut -f1) ISO)::$(head -30 out/biggest-packages.txt | sed 's/  */ /g' | tr '\n' ';')"
           sudo rm -rf chroot binary cache .build   # room to cut the full edition into pieces
           sudo chown -R "$(id -u)" out
+          [ -f "${ISO%.iso}.packages" ] && gh release upload tejas-os-v1.0 "${ISO%.iso}.packages" -R "$GITHUB_REPOSITORY" --clobber || true
           bash .github/publish.sh "$ISO"

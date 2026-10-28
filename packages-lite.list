@@ -117,3 +117,10 @@ firefox-esr-l10n-ur
 ## Secure Boot: lets TEJAS start on PCs with Secure Boot switched on
 shim-signed
 grub-efi-amd64-signed
+
+## Security: firewall on, automatic security updates, app confinement
+ufw
+plasma-firewall
+unattended-upgrades
+apparmor
+apparmor-profiles
