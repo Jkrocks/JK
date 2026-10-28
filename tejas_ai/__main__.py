@@ -28,7 +28,9 @@ def make_servers(host=None, http_port=None, https_port=None, use_https=None):
 
     from .server import create_app
     app = create_app()
-    servers = [uvicorn.Server(uvicorn.Config(app, host=host, port=http_port, log_level="warning"))]
+    # Plain http never leaves this computer; other screens use the encrypted https port.
+    http_host = "127.0.0.1" if (use_https and host in ("0.0.0.0", "::")) else host
+    servers = [uvicorn.Server(uvicorn.Config(app, host=http_host, port=http_port, log_level="warning"))]
     urls = {"local": f"http://localhost:{http_port}", "lan": []}
     if use_https:
         crt, key, _ = certs.ensure(root / "certs")

@@ -147,3 +147,26 @@ def test_online_key_hidden_and_live_reload(tmp_path):
     assert a.get("llm.api_key") == "gsk_secret"          # picks up the desktop window's change
     assert a.public()["llm"]["api_key"] == "set"          # never sent to screens
     assert "gsk_secret" not in json.dumps(a.public())
+
+
+def test_home_only_blocks_other_websites(app_factory):
+    from fastapi.testclient import TestClient
+    app, _ = app_factory()
+    with TestClient(app) as client:
+        _check_home_only(client)
+
+
+def _check_home_only(client):
+    # Rebinding: a strange website name pointed at this computer
+    assert client.get("/api/status", headers={"host": "evil.example.com"}).status_code == 403
+    # LAN IP and localhost are fine
+    assert client.get("/api/status", headers={"host": "192.168.1.20:8443"}).status_code == 200
+    # CSRF: another website posting into Tejas
+    r = client.post("/api/reminders", json={"text": "x", "when": "in 5 minutes"},
+                    headers={"origin": "https://evil.example.com"})
+    assert r.status_code == 403
+    # Tejas's own screen posting is fine
+    r = client.post("/api/reminders", json={"text": "x", "when": "in 5 minutes"},
+                    headers={"origin": "http://testserver"})
+    assert r.status_code == 200
+    assert client.get("/api/status").headers["x-frame-options"] == "DENY"

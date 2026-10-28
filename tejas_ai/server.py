@@ -6,6 +6,8 @@ from __future__ import annotations
 import asyncio
 import datetime as dt
 import hashlib
+import ipaddress
+import socket
 import hmac
 import json
 import os
@@ -13,6 +15,7 @@ import secrets
 import time
 from contextlib import asynccontextmanager
 from pathlib import Path
+from urllib.parse import urlsplit
 
 from fastapi import FastAPI, File, Form, Header, HTTPException, Request, UploadFile
 from fastapi.responses import FileResponse, JSONResponse, Response, StreamingResponse
@@ -172,6 +175,48 @@ def create_app(data_dir: Path | None = None, llm=None) -> FastAPI:
         math.close()
 
     app = FastAPI(title="Tejas AI", version=__version__, lifespan=lifespan, docs_url=None, redoc_url=None)
+
+    # Security: only this home's own screens may talk to Tejas -------------
+    # 1. Host check: blocks "DNS rebinding", where a website points its own name at this
+    #    computer to reach Tejas. Real screens use an IP address, localhost or a local name.
+    # 2. Origin check: a web page from elsewhere can't send commands (CSRF).
+    extra_hosts = {h.lower() for h in (cfg.get("server.allowed_hosts", []) or [])}
+    machine = socket.gethostname().lower()
+
+    def host_ok(h: str) -> bool:
+        h = (h or "").strip().lower().strip("[]")
+        if not h:
+            return False
+        try:
+            ipaddress.ip_address(h)
+            return True  # an IP literal can't be rebound by an outside website
+        except ValueError:
+            pass
+        return (h in {"localhost", "testserver", machine, f"{machine}.local"} or h in extra_hosts
+                or h.endswith((".local", ".lan", ".home", ".home.arpa", ".localhost")))
+
+    def split_host(value: str) -> str:
+        value = value.strip()
+        if value.startswith("["):
+            return value[1:value.find("]")]
+        return value.rsplit(":", 1)[0] if value.count(":") == 1 else value
+
+    @app.middleware("http")
+    async def home_only(request: Request, call_next):
+        if not host_ok(split_host(request.headers.get("host", ""))):
+            return JSONResponse({"error": "Unknown address. Open Tejas with the address shown in the Tejas window, "
+                                          "or add this name to server.allowed_hosts in config.json."}, status_code=403)
+        origin = request.headers.get("origin")
+        if origin and request.method not in ("GET", "HEAD", "OPTIONS"):
+            o = urlsplit(origin)
+            if origin == "null" or not host_ok(o.hostname or "") or (o.netloc or "").lower() != request.headers.get("host", "").lower():
+                return JSONResponse({"error": "Blocked: this request came from another website."}, status_code=403)
+        resp = await call_next(request)
+        resp.headers.setdefault("X-Content-Type-Options", "nosniff")
+        resp.headers.setdefault("X-Frame-Options", "DENY")
+        resp.headers.setdefault("Referrer-Policy", "no-referrer")
+        resp.headers.setdefault("Permissions-Policy", "camera=(), geolocation=(), microphone=(self)")
+        return resp
     app.state.cfg, app.state.memory, app.state.brain = cfg, memory, brain
 
     @app.middleware("http")

@@ -6,6 +6,8 @@ on:
 
 permissions:
   contents: write
+  id-token: write
+  attestations: write
 
 jobs:
   ipa:
@@ -63,6 +65,12 @@ jobs:
                                "NSLocalNetworkUsageDescription": "Tejas looks for your family's home computer on your Wi-Fi."}}}]}
           json.dump(src, open("out/altstore-source.json", "w"), indent=2)
           PY
+      - name: Sign build provenance
+        if: github.event_name != 'pull_request'
+        uses: actions/attest-build-provenance@v2
+        with:
+          subject-path: mobile/ios/out/Tejas-AI-iOS-unsigned.ipa
+
       - name: Publish to the Tejas AI release (direct download links)
         if: github.ref == 'refs/heads/tejas-ai'
         env:

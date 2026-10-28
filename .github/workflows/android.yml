@@ -6,6 +6,8 @@ on:
 
 permissions:
   contents: write
+  id-token: write
+  attestations: write
 
 jobs:
   apk:
@@ -32,6 +34,12 @@ jobs:
           name: Tejas-AI-Android
           path: out/Tejas-AI-Android.apk
           retention-days: 30
+      - name: Sign build provenance
+        if: github.event_name != 'pull_request'
+        uses: actions/attest-build-provenance@v2
+        with:
+          subject-path: out/Tejas-AI-Android.apk
+
       - name: Publish to the Tejas AI release (direct download link)
         if: github.ref == 'refs/heads/tejas-ai'
         env:
