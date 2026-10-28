@@ -123,3 +123,7 @@ firefox-esr-l10n-kn
 firefox-esr-l10n-or
 firefox-esr-l10n-as
 firefox-esr-l10n-ur
+
+## Secure Boot: lets TEJAS start on PCs with Secure Boot switched on
+shim-signed
+grub-efi-amd64-signed
