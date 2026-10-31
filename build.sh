@@ -46,6 +46,13 @@ done < "$PKGS"
 if [ "${#missing[@]}" -gt 0 ]; then
 	echo "!! Skipping packages not found in Debian 13: ${missing[*]}"
 fi
+# Never ship without the protections TEJAS promises.
+for must in ufw unattended-upgrades apparmor; do
+	if ! grep -qx "$must" config/package-lists/tejas.list.chroot; then
+		echo "!! Security package '$must' is missing: refusing to build an unprotected ISO." >&2
+		exit 1
+	fi
+done
 echo "   $(wc -l < config/package-lists/tejas.list.chroot) packages will be installed"
 
 echo "$EDITION" > config/includes.chroot/etc/tejas-edition

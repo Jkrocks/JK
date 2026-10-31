@@ -16,11 +16,14 @@ Built on **Debian 13** with **KDE Plasma 6**, in the TEJAS sky-glass style.
 
 ## 1. Get the ISO
 
-Every push to `main` builds a fresh ISO on GitHub, in the cloud, for free.
+Download it from the public release, no GitHub account needed: **Releases → TEJAS OS 1.0** (`tejas-os-v1.0`).
 
-1. Open the **Actions** tab, then **Build TEJAS ISO**.
-2. Pick the latest green run, or press **Run workflow** to start one. A build takes 45 to 90 minutes.
-3. Under **Artifacts**, download **tejas-1.0-amd64**. It's a zip containing `tejas-1.0-amd64.iso` and its checksum.
+- **Lite:** one file, `tejas-1.0-lite-amd64.iso` (under 2 GB).
+- **Full:** download every piece (`.001`, `.002`, ...) plus `JOIN-TEJAS-WINDOWS.bat` into one folder and double-click the JOIN file.
+
+To check it's genuine, see [SECURITY.md](SECURITY.md#checking-a-download-is-genuine).
+
+Builders: every push to `tejas-os` builds and publishes a fresh ISO. **Actions → Build TEJAS ISO → Run workflow** builds on demand (pick `lite` or `full`, 45 to 90 minutes).
 
 If a run goes red, download **build-log** from the same page. The last lines say what failed.
 

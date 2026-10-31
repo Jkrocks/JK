@@ -5,6 +5,8 @@ on:
     inputs:
       edition:
         description: "full (5 GB, every app) or lite (one file under 2 GB)"
+        type: choice
+        options: [lite, full]
         default: lite
   push:
     branches: [main, tejas-os]
@@ -35,15 +37,20 @@ jobs:
           sudo docker image prune --all --force
           df -h /
 
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+        with:
+          persist-credentials: false   # keep the write token out of the build container
 
       - name: Build the ISO inside Debian 13
         run: |
+          # Build output is not allowed to issue GitHub workflow commands.
+          stop=$(uuidgen); echo "::stop-commands::$stop"
           docker run --rm --privileged \
             -e EDITION="$EDITION" -v "$PWD":/build -w /build \
             debian:trixie \
             bash -c "chmod +x build.sh auto/* config/hooks/live/*.hook.chroot config/includes.chroot/usr/bin/* && ./build.sh" 2>&1 | tee step.log
           rc=${PIPESTATUS[0]}
+          echo "::$stop::"
           if [ $rc -ne 0 ]; then
             msg=$(tail -n 40 step.log | sed 's/%/%25/g' | tr '\n' '\r' | sed 's/\r/%0A/g')
             echo "::error title=Build stopped (exit $rc)::$msg"
@@ -52,7 +59,10 @@ jobs:
 
       - name: Show the end of the build log
         if: always()
-        run: sudo tail -n 120 build.log || true
+        run: |
+          stop=$(uuidgen); echo "::stop-commands::$stop"
+          sudo tail -n 120 build.log || true
+          echo "::$stop::"
 
       - name: Explain a failure (readable in the run summary)
         if: failure()
@@ -63,7 +73,7 @@ jobs:
           done
 
       - name: Upload the ISO
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: tejas-1.0-${{ env.EDITION }}-amd64
           path: |
@@ -74,14 +84,14 @@ jobs:
 
       - name: Upload the build log
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: build-log
           path: build.log
           retention-days: 14
 
       - name: Sign build provenance (lets anyone verify the ISO came from this recipe)
-        uses: actions/attest-build-provenance@v2
+        uses: actions/attest-build-provenance@e8998f949152b193b063cb0ec769d69d929409be # v2.4.0
         with:
           subject-path: out/*.iso
 

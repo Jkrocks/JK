@@ -11,9 +11,9 @@ VERSION_CODENAME=trixie
 ID=tejas
 ID_LIKE=debian
 LOGO=tejas-logo
-HOME_URL="https://github.com/Jkrocks/tejas-os"
-SUPPORT_URL="https://github.com/Jkrocks/tejas-os/issues"
-BUG_REPORT_URL="https://github.com/Jkrocks/tejas-os/issues"
+HOME_URL="https://github.com/Jkrocks/JK/tree/tejas-os"
+SUPPORT_URL="https://github.com/Jkrocks/JK/issues"
+BUG_REPORT_URL="https://github.com/Jkrocks/JK/issues"
 EOF
 ln -sf ../usr/lib/os-release /etc/os-release
 
@@ -32,6 +32,6 @@ mkdir -p /etc/xdg
 cat > /etc/xdg/kcm-about-distrorc <<'EOF'
 [General]
 LogoPath=/usr/share/tejas/branding/logo-256.png
-Website=https://github.com/Jkrocks/tejas-os
+Website=https://github.com/Jkrocks/JK/tree/tejas-os
 Variant=Sky
 EOF

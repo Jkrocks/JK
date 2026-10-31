@@ -13,9 +13,17 @@ CHOICE=$(kdialog --title "$TITLE" --separate-output --checklist "Pick the free a
 	supertuxkart "SuperTuxKart - racing game" on \
 	wine "Wine - run some Windows apps" off) || exit 0
 [ -z "$CHOICE" ] && exit 0
-PKGS=$(echo "$CHOICE" | tr '\n' ' ')
+PKGS=""
+for p in $CHOICE; do
+	# Only the apps offered above can ever reach the administrator step.
+	case "$p" in
+		gimp|krita|inkscape|kdenlive|obs-studio|blender|libreoffice|thunderbird|supertuxkart|wine) PKGS="$PKGS $p" ;;
+		*) kdialog --title "$TITLE" --sorry "Unknown choice: $p"; exit 1 ;;
+	esac
+done
+[ -z "$PKGS" ] && exit 0
 if ! ping -c1 -W3 deb.debian.org >/dev/null 2>&1; then
 	kdialog --title "$TITLE" --sorry "Connect to the internet (Wi-Fi icon, bottom right), then try again."
 	exit 1
 fi
-konsole --hide-menubar -p tabtitle="Installing apps" -e sh -c "echo 'Installing: $PKGS'; echo; pkexec sh -c 'apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y $PKGS' && echo && echo 'All done! Find your new apps in the Start menu.' || echo 'Something went wrong. Check the internet and try again.'; echo; read -p 'Press Enter to close' x"
+konsole --hide-menubar -p tabtitle="Installing apps" -e sh -c "echo 'Installing: $PKGS'; echo; pkexec sh -c 'apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y --$PKGS' && echo && echo 'All done! Find your new apps in the Start menu.' || echo 'Something went wrong. Check the internet and try again.'; echo; read -p 'Press Enter to close' x"

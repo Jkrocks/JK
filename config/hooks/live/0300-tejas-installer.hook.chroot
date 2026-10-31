@@ -18,10 +18,10 @@ sed -i -E \
 	-e 's/^([[:space:]]*versionedName:).*/\1       "TEJAS 1.0"/' \
 	-e 's/^([[:space:]]*shortVersionedName:).*/\1  "TEJAS 1.0"/' \
 	-e 's/^([[:space:]]*bootloaderEntryName:).*/\1 "TEJAS"/' \
-	-e 's#^([[:space:]]*productUrl:).*#\1          "https://github.com/Jkrocks/tejas-os"#' \
-	-e 's#^([[:space:]]*supportUrl:).*#\1          "https://github.com/Jkrocks/tejas-os/issues"#' \
-	-e 's#^([[:space:]]*knownIssuesUrl:).*#\1      "https://github.com/Jkrocks/tejas-os/issues"#' \
-	-e 's#^([[:space:]]*releaseNotesUrl:).*#\1     "https://github.com/Jkrocks/tejas-os/releases"#' \
+	-e 's#^([[:space:]]*productUrl:).*#\1          "https://github.com/Jkrocks/JK/tree/tejas-os"#' \
+	-e 's#^([[:space:]]*supportUrl:).*#\1          "https://github.com/Jkrocks/JK/issues"#' \
+	-e 's#^([[:space:]]*knownIssuesUrl:).*#\1      "https://github.com/Jkrocks/JK/issues"#' \
+	-e 's#^([[:space:]]*releaseNotesUrl:).*#\1     "https://github.com/Jkrocks/JK/releases/tag/tejas-os-v1.0"#' \
 	-e 's/^([[:space:]]*[Ss]idebar[Bb]ackground:).*/\1 "#eaf5ff"/' \
 	-e 's/^([[:space:]]*[Ss]idebar[Tt]ext:).*/\1 "#0d1117"/' \
 	-e 's/^([[:space:]]*[Ss]idebar[Tt]ext[Ss]elect:).*/\1 "#ffffff"/' \

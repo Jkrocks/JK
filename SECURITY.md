@@ -24,7 +24,15 @@ those projects; tell us too if TEJAS ships an affected version.
 Every ISO and app is built in public on GitHub Actions and signed with a build-provenance attestation:
 
 ```sh
-gh attestation verify tejas-1.0-lite-amd64.iso --repo Jkrocks/JK
+# Lite (one file)
+gh attestation verify tejas-1.0-lite-amd64.iso --repo Jkrocks/JK \
+  --signer-workflow Jkrocks/JK/.github/workflows/build-iso.yml --source-ref refs/heads/tejas-os
+# Full (after joining the pieces)
+gh attestation verify tejas-1.0-amd64.iso --repo Jkrocks/JK \
+  --signer-workflow Jkrocks/JK/.github/workflows/build-iso.yml --source-ref refs/heads/tejas-os
 ```
 
-You can also compare the file's SHA-256 with the `.sha256` file next to it on the release page.
+This proves the ISO was made by the TEJAS build recipe on the `tejas-os` branch, not by anyone else.
+
+The `.sha256` file and the check inside `JOIN-TEJAS-WINDOWS.bat` come from the same release page, so they only
+prove the download is **complete**, not that it is **genuine**. Use the attestation check above for that.
